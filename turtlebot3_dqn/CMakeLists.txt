@@ -67,7 +67,6 @@ catkin_install_python(PROGRAMS
   src/${PROJECT_NAME}/environment_stage_3.py
   src/${PROJECT_NAME}/environment_stage_4.py
   src/${PROJECT_NAME}/respawnGoal.py
-  nodes/upload_model.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
