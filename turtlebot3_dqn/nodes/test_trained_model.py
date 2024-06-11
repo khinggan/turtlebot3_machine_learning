@@ -30,8 +30,6 @@ from script.read_config import yaml_config
 device = "cpu"
 print(f"Using {device} device")
 
-Transition = namedtuple('Transition', ('state', 'action', 'reward', 'next_state'))
-
 # TEST
 TEST_EPOCHES = 10
 TEST_STAGE = 1
@@ -67,64 +65,7 @@ state_size = 26
 action_size = 5
 env = Env(action_size)
 
-class ReplayMemory(object):
-
-    def __init__(self, capacity):
-        self.memory = deque([], maxlen=capacity)
-
-    def push(self, *args):
-        """Save a transition"""
-        self.memory.append(Transition(*args))
-
-    def sample(self, batch_size):
-        return random.sample(self.memory, batch_size)
-
-    def __len__(self):
-        return len(self.memory)
-
-class DQN(nn.Module):
-
-    def __init__(self, n_observations, n_actions):
-        super(DQN, self).__init__()
-        self.layer1 = nn.Linear(n_observations, 128)
-        self.layer2 = nn.Linear(128, 128)
-        self.layer3 = nn.Linear(128, n_actions)
-
-    # Called with either one element to determine next action, or a batch
-    # during optimization. Returns tensor([[left0exp,right0exp]...]).
-    def forward(self, x):
-        x = F.relu(self.layer1(x))
-        x = F.relu(self.layer2(x))
-        return self.layer3(x)
-
-class ReinforceAgent():
-    def __init__(self, state_size, action_size):
-        self.state_size = state_size
-        self.action_size = action_size
-        self.episode_step = 6000
-
-        self.model = DQN(self.state_size, self.action_size).to(device)
-
-    def getQvalue(self, reward, next_target, done):
-        if done:
-            return reward
-        else:
-            return reward + self.discount_factor * np.amax(next_target)
-
-    def getAction(self, state):
-        # if np.random.rand() <= 0.1:
-        #     return torch.tensor([[random.randrange(self.action_size)]], device=device, dtype=torch.long)
-        # else:
-        with torch.no_grad():
-            # t.max(1) will return the largest column value of each row.
-            # second column on max result is index of where max element was
-            # found, so we pick action with the larger expected reward.
-            q_value = self.model(state)
-        q_value = torch.argmax(q_value).item()
-        return q_value
-            # q_value = self.model(state.reshape(1, len(state)))
-            # self.q_value = q_value
-            # return np.argmax(q_value[0])
+from ros1_ws.src.turtlebot3_machine_learning.turtlebot3_dqn.utils.agent import ReinforceAgent
 
 if __name__ == '__main__':
     rospy.init_node('test_trained_model')
