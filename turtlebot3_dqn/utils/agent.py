@@ -42,14 +42,16 @@ class ReinforceAgent():
 
     def getAction(self, state):
         if np.random.rand() <= self.epsilon:
-            return torch.tensor([[random.randrange(self.action_size)]], device=device, dtype=torch.long)
+            # return torch.tensor([[random.randrange(self.action_size)]], device=device, dtype=torch.long)
+            return random.randrange(self.action_size)
         else:
             with torch.no_grad():
                 # t.max(1) will return the largest column value of each row.
                 # second column on max result is index of where max element was
                 # found, so we pick action with the larger expected reward.
+                state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
                 q_value_output = self.model(state)
-                self.q_value = q_value_output.max(1).indices.view(1, 1)
+                self.q_value = q_value_output.max(1).indices.view(1, 1).item()
                 return self.q_value
             # q_value = self.model(state.reshape(1, len(state)))
             # self.q_value = q_value
@@ -72,10 +74,15 @@ class ReinforceAgent():
         # non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,batch.next_state)), device=device, dtype=torch.bool)
         # non_final_next_states = torch.cat([s for s in batch.next_state if s is not None])
 
-        state_batch = torch.cat(batch.state)
-        action_batch = torch.cat(batch.action)
-        reward_batch = torch.cat(batch.reward)
-        next_state_batch = torch.cat(batch.next_state)
+        # state_batch = torch.cat(torch.from_numpy(np.array(batch.state)))
+        # action_batch = torch.cat(torch.from_numpy(np.array(batch.action)))
+        # reward_batch = torch.cat(torch.from_numpy(np.array(batch.reward)))
+        # next_state_batch = torch.cat(torch.from_numpy(np.array(batch.next_state)))
+
+        state_batch = torch.from_numpy(np.array(batch.state)).to(device=device, dtype=torch.float32)
+        action_batch = torch.from_numpy(np.array(batch.action)).to(device=device, dtype=torch.int64).unsqueeze(1)
+        reward_batch = torch.from_numpy(np.array(batch.reward)).to(device=device, dtype=torch.float32)
+        next_state_batch = torch.from_numpy(np.array(batch.next_state)).to(device=device, dtype=torch.float32)
 
         # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
         # columns of actions taken. These are the actions which would've been taken

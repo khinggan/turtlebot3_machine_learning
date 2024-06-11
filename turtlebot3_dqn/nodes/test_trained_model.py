@@ -100,15 +100,12 @@ if __name__ == '__main__':
     for e in range(1, TEST_EPOCHES+1):
         done = False
         state = env.reset()
-        state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
         score = 0
         for t in range(agent.episode_step):
-            action = agent.getAction(state)
+            # action = agent.getAction(state)
+            action = agent.model(torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)).max(1).indices.view(1, 1).item()
 
             next_state, reward, done = env.step(action)
-
-            reward = torch.tensor([reward], device=device)
-            next_state = torch.tensor(next_state, dtype=torch.float32, device=device).unsqueeze(0)
 
             score += reward
             state = next_state

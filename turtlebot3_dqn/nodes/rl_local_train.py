@@ -14,9 +14,6 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import importlib
-
-import torch
-
 import csv
 import pickle
 
@@ -32,7 +29,6 @@ STAGE = config['RL']['stage']
 EPISODES = config['RL']['episodes']
 
 stage_module_name = f'src.turtlebot3_dqn.environment_stage_{STAGE}'
-# from src.turtlebot3_dqn.environment_stage_1 import Env
 Env = getattr(importlib.import_module(stage_module_name), 'Env')
 
 state_size = 26
@@ -56,10 +52,9 @@ if __name__ == '__main__':
     for e in range(1, EPISODES+1):
         done = False
         state = env.reset()
-        state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
-        score = 0
-        collision = 0
-        goal = 0
+        score = 0.0
+        collision_times = 0
+        goal_times = 0
         for t in range(agent.episode_step):
             action = agent.getAction(state)
 
@@ -67,13 +62,9 @@ if __name__ == '__main__':
 
             # check goal or collision
             if reward == 200:
-                goal += 1
-            
+                goal_times += 1
             if reward == -200:
-                collision += 1
-
-            reward = torch.tensor([reward], device=device)
-            next_state = torch.tensor(next_state, dtype=torch.float32, device=device).unsqueeze(0)
+                collision_times += 1
 
             agent.appendMemory(state, action, reward, next_state)
 
@@ -97,20 +88,18 @@ if __name__ == '__main__':
             agent.target_model.load_state_dict(target_net_state_dict)
 
             if done:
-                # agent.updateTargetModel()
                 scores.append(score)
                 episodes.append(e)
                 episode_length.append(t)
-                m, s = divmod(int(time.time() - start_time), 60)
-                h, m = divmod(m, 60)
-
                 memory_lens.append(len(agent.memory))
                 epsilons.append(agent.epsilon)
+                m, s = divmod(int(time.time() - start_time), 60)
+                h, m = divmod(m, 60)
                 episode_hours.append(h)
                 episode_minutes.append(m)
                 episode_seconds.append(s)
-                collisions.append(collision)
-                goals.append(goal)
+                collisions.append(collision_times)
+                goals.append(goal_times)
 
                 rospy.loginfo('Ep: %d score: %.2f memory: %d epsilon: %.2f time: %d:%02d:%02d',
                               e, score, len(agent.memory), agent.epsilon, h, m, s)
@@ -126,10 +115,14 @@ if __name__ == '__main__':
                         pickle.dump(agent.model.state_dict(), md)
                         print("BEST SCORE MODEL SAVE: Episode = {}, Best Score = {}".format(e, best_score))
                 break
-
+                # if e % 100 == 0:
+                #     save_dict_directory = os.environ['ROSFRLPATH'] + "model_dicts/saved_dict/"
+                #     if not os.path.exists(save_dict_directory):
+                #         os.makedirs(save_dict_directory)
+                #     with open(save_dict_directory + "RL_episode_{}_stage_{}.pkl".format(EPISODES, STAGE), 'wb') as md:
+                #         pickle.dump(agent.model.state_dict(), md)
+                # break  
             global_step += 1
-            # if global_step % agent.target_update == 0:
-            #     rospy.loginfo("UPDATE TARGET NETWORK")
 
         # if agent.epsilon > agent.epsilon_min:
         #     agent.epsilon *= agent.epsilon_decay
@@ -141,7 +134,7 @@ if __name__ == '__main__':
     with open(directory_path + "RL_episode_{}_stage_{}.csv".format(EPISODES, STAGE), 'a') as d:
         writer = csv.writer(d)
         writer.writerows([item for item in zip(scores, episodes, memory_lens, epsilons, episode_hours, episode_minutes, episode_seconds, collisions, goals)])
-        print([item for item in zip(scores, episodes, memory_lens, epsilons, episode_hours, episode_minutes, episode_seconds, collisions, goals)])
+        # print([item for item in zip(scores, episodes, memory_lens, epsilons, episode_hours, episode_minutes, episode_seconds, collisions, goals)])
 
     # SAVE TRAINED DICT
     if best_model_dict == None:
