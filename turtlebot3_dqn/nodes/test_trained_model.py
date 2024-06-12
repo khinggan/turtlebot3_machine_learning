@@ -8,18 +8,13 @@ according to PyTorch Official Tutorial of Reinforcement Learning: https://pytorc
 """
 
 import rospy
-import numpy as np
-import random
 import time
-from collections import deque, namedtuple
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import importlib
 
 import torch
-from torch import nn
-import torch.nn.functional as F
 
 import pickle
 

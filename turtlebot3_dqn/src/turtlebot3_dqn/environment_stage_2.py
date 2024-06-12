@@ -69,7 +69,7 @@ class Env():
     def getState(self, scan):
         scan_range = []
         heading = self.heading
-        min_range = 0.16
+        min_range = 0.13
         done = False
 
         for i in range(len(scan.ranges)):
@@ -91,7 +91,6 @@ class Env():
 
         # return scan_range + [heading, current_distance, obstacle_min_range, obstacle_angle], done
         return scan_range + [heading, current_distance], done
-
     def setReward(self, state, done, action):
         yaw_reward = []
         current_distance = state[-1]

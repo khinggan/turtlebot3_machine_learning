@@ -72,7 +72,7 @@ if __name__ == '__main__':
             score += reward
             state = next_state
 
-            if t >= 180:
+            if t >= 240:
                 rospy.loginfo("Time out!!")
                 done = True
 

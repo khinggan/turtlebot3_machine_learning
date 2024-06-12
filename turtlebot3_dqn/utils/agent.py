@@ -18,7 +18,7 @@ class ReinforceAgent():
         self.learning_rate = 0.00025
         self.epsilon = 1.0
         self.epsilon_start = 0.95
-        self.epsilon_decay = 5000
+        self.epsilon_decay = 10000
         self.epsilon_end = 0.05
         self.batch_size = 128
         self.train_start = 128
