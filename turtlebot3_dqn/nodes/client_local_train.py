@@ -48,6 +48,7 @@ env = Env(action_size)
 from ros1_ws.src.turtlebot3_machine_learning.turtlebot3_dqn.utils.agent import ReinforceAgent
 
 agent = ReinforceAgent(state_size, action_size)
+global_step = 0
 
 def start_train(request):
     global_model_dict = request.req
@@ -60,7 +61,7 @@ def start_train(request):
     agent.updateTargetModel()
     
     scores, episodes, episode_length, memory_lens, epsilons, episode_hours, episode_minutes, episode_seconds, collisions, goals = [], [], [], [], [], [], [], [], [], []
-    global_step = 0
+    
     best_score = 0
     best_model_dict = model_dict
 
