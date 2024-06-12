@@ -48,7 +48,6 @@ env = Env(action_size)
 from ros1_ws.src.turtlebot3_machine_learning.turtlebot3_dqn.utils.agent import ReinforceAgent
 
 agent = ReinforceAgent(state_size, action_size)
-global_step = 0
 
 def start_train(request):
     global_model_dict = request.req
@@ -96,7 +95,7 @@ def start_train(request):
 
             # update epsilon
             agent.epsilon = agent.epsilon_end + (agent.epsilon_start - agent.epsilon_end) * \
-                            math.exp(-1. * global_step / agent.epsilon_decay)
+                            math.exp(-1. * agent.global_step / agent.epsilon_decay)
             
             # soft update target network
             target_net_state_dict = agent.target_model.state_dict()
@@ -128,7 +127,7 @@ def start_train(request):
                     print("BEST SCORE MODEL SAVE: Episode = {}, Best Score = {}".format(e, best_score))
                 break
 
-            global_step += 1
+            agent.global_step += 1
 
         # if agent.epsilon > agent.epsilon_min:
         #     agent.epsilon *= agent.epsilon_decay

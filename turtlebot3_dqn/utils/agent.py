@@ -11,6 +11,7 @@ print(f"Using {device} device")
 
 class ReinforceAgent():
     def __init__(self, state_size, action_size):
+        self.global_step = 0
         self.state_size = state_size
         self.action_size = action_size
         self.episode_step = 6000
