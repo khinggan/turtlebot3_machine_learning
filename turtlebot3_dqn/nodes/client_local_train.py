@@ -39,7 +39,7 @@ class FRLClient:
         self.agent = ReinforceAgent(state_size, action_size)
 
         self.best_score = 0
-        self.best_model = None
+        self.best_model_dict = None
         
         self.local_train_service = rospy.Service('client_{}_local_train_service'.format(CURR_CID), LocalTrain, self.handle_local_train)
 
