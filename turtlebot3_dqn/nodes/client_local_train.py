@@ -37,6 +37,9 @@ class FRLClient:
     def __init__(self, state_size=26, action_size=5) -> None:
         self.env = Env(action_size)
         self.agent = ReinforceAgent(state_size, action_size)
+
+        self.best_score = 0
+        self.best_model = None
         
         self.local_train_service = rospy.Service('client_{}_local_train_service'.format(CURR_CID), LocalTrain, self.handle_local_train)
 
@@ -51,9 +54,6 @@ class FRLClient:
         self.agent.updateTargetModel()
         
         scores, episodes, episode_length, memory_lens, epsilons, episode_hours, episode_minutes, episode_seconds, collisions, goals = [], [], [], [], [], [], [], [], [], []
-        
-        best_score = 0
-        best_model_dict = global_model_dict
 
         # start train EPISODES episodes
         start_time = time.time()
@@ -113,10 +113,10 @@ class FRLClient:
                     rospy.loginfo('Ep: %d score: %.2f memory: %d epsilon: %.2f time: %d:%02d:%02d',
                                 e, score, len(self.agent.memory), self.agent.epsilon, h, m, s)
                     # save best model
-                    if score > best_score:
-                        best_score = score
-                        best_model_dict = self.agent.model.state_dict()
-                        print("BEST SCORE MODEL SAVE: Episode = {}, Best Score = {}".format(e, best_score))
+                    if score > self.best_score:
+                        self.best_score = score
+                        self.best_model_dict = self.agent.model.state_dict()
+                        print("BEST SCORE MODEL SAVE: Episode = {}, Best Score = {}".format(e, self.best_score))
                     break
 
                 self.agent.global_step += 1
@@ -134,10 +134,10 @@ class FRLClient:
         with open(directory_path + "FRL_localep_{}_totalround_{}_client_{}_stage_{}.csv".format(LOCAL_EPISODES,  ROUND, CURR_CID, STAGE), 'a') as d:
             writer = csv.writer(d)
             writer.writerows([item for item in zip(scores, episodes, memory_lens, epsilons, episode_hours, episode_minutes, episode_seconds, collisions, goals)])
-            print([item for item in zip(scores, episodes, memory_lens, epsilons, episode_hours, episode_minutes, episode_seconds, collisions, goals)])
+            # print([item for item in zip(scores, episodes, memory_lens, epsilons, episode_hours, episode_minutes, episode_seconds, collisions, goals)])
 
         print("Total Train Time on client {} is : {} seconds".format(CURR_CID, end_time - start_time))
-        trained_model_dict_pickle = pickle.dumps(best_model_dict)
+        trained_model_dict_pickle = pickle.dumps(self.best_model_dict)
 
 
         response = LocalTrainResponse()
