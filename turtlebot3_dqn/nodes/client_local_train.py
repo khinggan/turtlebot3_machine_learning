@@ -137,6 +137,7 @@ class FRLClient:
             # print([item for item in zip(scores, episodes, memory_lens, epsilons, episode_hours, episode_minutes, episode_seconds, collisions, goals)])
 
         print("Total Train Time on client {} is : {} seconds".format(CURR_CID, end_time - start_time))
+        self.best_model_dict = self.agent.model.state_dict() if self.best_model_dict is None else self.best_model_dict
         trained_model_dict_pickle = pickle.dumps(self.best_model_dict)
 
 
