@@ -38,7 +38,7 @@ class FRLClient:
         self.env = Env(action_size)
         self.agent = ReinforceAgent(state_size, action_size)
 
-        self.hist_best_score = 0
+        self.hist_best_score = float('-inf')
         self.hist_best_model_dict = None
         
         self.local_train_service = rospy.Service('client_{}_local_train_service'.format(CURR_CID), LocalTrain, self.handle_local_train)
@@ -49,7 +49,7 @@ class FRLClient:
         global_model_dict = pickle.loads(global_model_dict_pickle)
         print("#### ROUND {}: CLIENT {} local train on Stage {} #### ".format(request.round, CURR_CID, STAGE))
 
-        curr_best_score = 0
+        curr_best_score = float('-inf')
         curr_best_model_dict = None
 
         # Initialize agent model with global model dict, update target model
@@ -145,7 +145,6 @@ class FRLClient:
 
         print("Total Train Time on client {} is : {} seconds".format(CURR_CID, end_time - start_time))
         if self.hist_best_score - curr_best_score < 20: 
-            # self.best_model_dict = self.agent.model.state_dict() if self.best_model_dict is None else self.best_model_dict
             trained_model_dict_pickle = pickle.dumps(curr_best_model_dict)
         else: 
             trained_model_dict_pickle = global_model_dict_pickle
