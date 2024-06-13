@@ -38,8 +38,8 @@ class FRLClient:
         self.env = Env(action_size)
         self.agent = ReinforceAgent(state_size, action_size)
 
-        self.best_score = 0
-        self.best_model_dict = None
+        self.hist_best_score = 0
+        self.hist_best_model_dict = None
         
         self.local_train_service = rospy.Service('client_{}_local_train_service'.format(CURR_CID), LocalTrain, self.handle_local_train)
 
@@ -48,6 +48,9 @@ class FRLClient:
         global_model_dict_pickle = request.req
         global_model_dict = pickle.loads(global_model_dict_pickle)
         print("#### ROUND {}: CLIENT {} local train on Stage {} #### ".format(request.round, CURR_CID, STAGE))
+
+        curr_best_score = 0
+        curr_best_model_dict = None
 
         # Initialize agent model with global model dict, update target model
         self.agent.model.load_state_dict(global_model_dict)
@@ -113,10 +116,14 @@ class FRLClient:
                     rospy.loginfo('Ep: %d score: %.2f memory: %d epsilon: %.2f time: %d:%02d:%02d',
                                 e, score, len(self.agent.memory), self.agent.epsilon, h, m, s)
                     # save best model
-                    if score > self.best_score:
-                        self.best_score = score
+                    if score > self.hist_best_score:
+                        self.hist_best_score = score
+                        curr_best_score = score
                         self.best_model_dict = self.agent.model.state_dict()
-                        print("BEST SCORE MODEL SAVE: Episode = {}, Best Score = {}".format(e, self.best_score))
+                        curr_best_model_dict = self.agent.model.state_dict()
+                    if score > curr_best_score:
+                        curr_best_score = score
+                        curr_best_model_dict = self.agent.model.state_dict()
                     break
 
                 self.agent.global_step += 1
@@ -137,9 +144,11 @@ class FRLClient:
             # print([item for item in zip(scores, episodes, memory_lens, epsilons, episode_hours, episode_minutes, episode_seconds, collisions, goals)])
 
         print("Total Train Time on client {} is : {} seconds".format(CURR_CID, end_time - start_time))
-        self.best_model_dict = self.agent.model.state_dict() if self.best_model_dict is None else self.best_model_dict
-        trained_model_dict_pickle = pickle.dumps(self.best_model_dict)
-
+        if self.hist_best_score - curr_best_score < 20: 
+            # self.best_model_dict = self.agent.model.state_dict() if self.best_model_dict is None else self.best_model_dict
+            trained_model_dict_pickle = pickle.dumps(curr_best_model_dict)
+        else: 
+            trained_model_dict_pickle = global_model_dict_pickle
 
         response = LocalTrainResponse()
         response.resp = trained_model_dict_pickle
