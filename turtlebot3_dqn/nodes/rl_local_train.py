@@ -6,8 +6,8 @@
 """Modification of ROBOTIS turtlebot3_machine_learning algorithm to PyTorch version 
 according to PyTorch Official Tutorial of Reinforcement Learning: https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
 """
-
 import math
+import pdb
 import rospy
 import time
 import os
@@ -51,13 +51,14 @@ class RLLocal:
         for e in range(1, EPISODES+1):
             done = False
             state = self.env.reset()
-            
             score = 0.0
+
+            # pdb.set_trace()
 
             for t in range(self.agent.episode_step):
                 action = self.agent.getAction(state)
 
-                next_state, reward, done = self.env.step(action)
+                next_state, reward, done = self.env.step(action, t)
 
                 self.agent.appendMemory(state, action, reward, next_state)
 
@@ -110,13 +111,6 @@ class RLLocal:
                             pickle.dump(self.agent.model.state_dict(), md)
                             print("BEST SCORE MODEL SAVE: Episode = {}, Best Score = {}".format(e, self.best_score))
                     break
-                    # if e % 100 == 0:
-                    #     save_dict_directory = os.environ['ROSFRLPATH'] + "model_dicts/saved_dict/"
-                    #     if not os.path.exists(save_dict_directory):
-                    #         os.makedirs(save_dict_directory)
-                    #     with open(save_dict_directory + "RL_episode_{}_stage_{}.pkl".format(EPISODES, STAGE), 'wb') as md:
-                    #         pickle.dump(self.agent.target_model.state_dict(), md)
-                    # break  
                 self.global_step += 1
 
         end_time = time.time()
@@ -146,7 +140,7 @@ class RLLocal:
 if __name__ == '__main__':
     """Train RL Model on Each Environment"""
     # For Stage 2, 3, 4, use 28 dim model input (obstacle_min_range, obstacle_angle)
-    if STAGE in (2, 3, 4): 
+    if STAGE in (2, 3, 4, 5): 
         state_size = 28
     else:
         state_size = 26
