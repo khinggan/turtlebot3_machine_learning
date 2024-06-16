@@ -80,21 +80,21 @@ class Env():
             else:
                 scan_range.append(scan.ranges[i])
 
-        # obstacle_min_range = round(min(scan_range), 2)
-        # obstacle_angle = np.argmin(scan_range)
+        obstacle_min_range = round(min(scan_range), 2)
+        obstacle_angle = np.argmin(scan_range)
         if min_range > min(scan_range) > 0:
             done = True
 
-        current_distance = round(math.hypot(self.goal_x - self.position.x, self.goal_y - self.position.y),2)
+        current_distance = round(math.hypot(self.goal_x - self.position.x, self.goal_y - self.position.y), 2)
         if current_distance < 0.2:
             self.get_goalbox = True
 
-        # return scan_range + [heading, current_distance, obstacle_min_range, obstacle_angle], done
-        return scan_range + [heading, current_distance], done
+        return scan_range + [heading, current_distance, obstacle_min_range, obstacle_angle], done
+        # return scan_range + [heading, current_distance], done
     def setReward(self, state, done, action):
         yaw_reward = []
-        current_distance = state[-1]
-        heading = state[-2]
+        current_distance = state[-3]
+        heading = state[-4]
 
         for i in range(5):
             angle = -pi / 4 + heading + (pi / 8 * i) + pi / 2
@@ -106,12 +106,12 @@ class Env():
 
         if done:
             rospy.loginfo("Collision!!")
-            reward = -200
+            reward = -2000
             self.pub_cmd_vel.publish(Twist())
 
         if self.get_goalbox:
             rospy.loginfo("Goal!!")
-            reward = 200
+            reward = 2000
             self.pub_cmd_vel.publish(Twist())
             self.goal_x, self.goal_y = self.respawn_goal.getPosition(True, delete=True)
             self.goal_distance = self.getGoalDistace()

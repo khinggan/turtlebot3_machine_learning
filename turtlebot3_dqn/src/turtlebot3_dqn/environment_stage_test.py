@@ -29,7 +29,8 @@ from tf.transformations import euler_from_quaternion, quaternion_from_euler
 from .respawnGoal import Respawn
 
 class Env():
-    def __init__(self, action_size):
+    def __init__(self, action_size, stage):
+        self.stage = stage
         self.goal_x = 0
         self.goal_y = 0
         self.heading = 0
@@ -80,8 +81,8 @@ class Env():
             else:
                 scan_range.append(scan.ranges[i])
 
-        # obstacle_min_range = round(min(scan_range), 2)
-        # obstacle_angle = np.argmin(scan_range)
+        obstacle_min_range = round(min(scan_range), 2)
+        obstacle_angle = np.argmin(scan_range)
         if min_range > min(scan_range) > 0:
             done = True
 
@@ -89,13 +90,20 @@ class Env():
         if current_distance < 0.2:
             self.get_goalbox = True
 
-        # return scan_range + [heading, current_distance, obstacle_min_range, obstacle_angle], done
-        return scan_range + [heading, current_distance], done
+        if self.stage in (2, 3, 4):
+            return_stage = scan_range + [heading, current_distance, obstacle_min_range, obstacle_angle], done
+        else:
+            return_stage = scan_range + [heading, current_distance], done
+        return return_stage
 
     def setReward(self, state, done, action):
         yaw_reward = []
-        current_distance = state[-1]
-        heading = state[-2]
+        if self.stage in (2, 3, 4):
+            current_distance = state[-3]
+            heading = state[-4]
+        else:
+            current_distance = state[-1]
+            heading = state[-2]
 
         for i in range(5):
             angle = -pi / 4 + heading + (pi / 8 * i) + pi / 2
