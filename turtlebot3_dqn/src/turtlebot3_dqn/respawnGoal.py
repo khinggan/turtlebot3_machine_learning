@@ -85,14 +85,14 @@ class Respawn():
 
         if self.stage != 4:
             while position_check:
-                # goal_x = random.randrange(-12, 13) / 10.0
-                # goal_y = random.randrange(-12, 13) / 10.0
+                goal_x = random.randrange(-12, 13) / 10.0
+                goal_y = random.randrange(-12, 13) / 10.0
 
                 # goal_x = random.uniform(-1.2, -0.6) if random.random() < 0.5 else random.uniform(0.6, 1.3)
                 # goal_y = random.uniform(-1.2, -0.6) if random.random() < 0.5 else random.uniform(0.6, 1.3)
 
-                goal_x = random.randrange(-6, 13) / 10.0
-                goal_y = random.uniform(-1.2, -0.6) if random.random() < 0.5 else random.uniform(0.6, 1.3)
+                # goal_x = random.randrange(-6, 13) / 10.0
+                # goal_y = random.uniform(-1.2, -0.6) if random.random() < 0.5 else random.uniform(0.6, 1.3)
 
                 if abs(goal_x - self.obstacle_1[0]) <= 0.4 and abs(goal_y - self.obstacle_1[1]) <= 0.4:
                     position_check = True

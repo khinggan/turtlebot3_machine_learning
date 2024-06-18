@@ -58,7 +58,7 @@ class RLLocal:
             for t in range(self.agent.episode_step):
                 action = self.agent.getAction(state)
 
-                next_state, reward, done = self.env.step(action, t)
+                next_state, reward, done = self.env.step(action)
 
                 self.agent.appendMemory(state, action, reward, next_state)
 
@@ -69,24 +69,24 @@ class RLLocal:
 
                 # check simulator stuck
                 if self.sim_stuck(state=state):
-                    score = -200
+                    score = -2000
                     done = True
                 
                 if t >= 240:
                     rospy.loginfo("Time out!!")
                     done = True
 
-                # update epsilon
+                # # update epsilon
                 self.agent.epsilon = self.agent.epsilon_end + \
-                                (self.agent.epsilon_start - self.agent.epsilon_end) * \
-                                math.exp(-1. * self.global_step / self.agent.epsilon_decay)
+                                    (self.agent.epsilon_start - self.agent.epsilon_end) * \
+                                    math.exp(-1. * self.global_step / self.agent.epsilon_decay)
                 
                 # soft update target network
-                target_net_state_dict = self.agent.target_model.state_dict()
-                policy_net_state_dict = self.agent.model.state_dict()
-                for key in policy_net_state_dict:
-                    target_net_state_dict[key] = policy_net_state_dict[key]*TAU + target_net_state_dict[key]*(1-TAU)
-                self.agent.target_model.load_state_dict(target_net_state_dict)
+                # target_net_state_dict = self.agent.target_model.state_dict()
+                # policy_net_state_dict = self.agent.model.state_dict()
+                # for key in policy_net_state_dict:
+                #     target_net_state_dict[key] = policy_net_state_dict[key]*TAU + target_net_state_dict[key]*(1-TAU)
+                # self.agent.target_model.load_state_dict(target_net_state_dict)
 
                 if done:
                     scores.append(score)
@@ -111,7 +111,20 @@ class RLLocal:
                             pickle.dump(self.agent.model.state_dict(), md)
                             print("BEST SCORE MODEL SAVE: Episode = {}, Best Score = {}".format(e, self.best_score))
                     break
+
                 self.global_step += 1
+                if self.global_step % self.agent.target_update == 0:
+                    self.agent.updateTargetModel()
+                    rospy.loginfo("UPDATE TARGET NETWORK")
+            # if self.agent.epsilon > self.agent.epsilon_min:
+            #     self.agent.epsilon *= self.agent.epsilon_decay
+            # if e % 100 == 0:
+            #     save_dict_directory = os.environ['ROSFRLPATH'] + "model_dicts/saved_dict/"
+            #     if not os.path.exists(save_dict_directory):
+            #         os.makedirs(save_dict_directory)
+            #     with open(save_dict_directory + "RL_episode_{}_stage_{}_trained_{}.pkl".format(EPISODES, STAGE, e), 'wb') as md:
+            #         pickle.dump(self.agent.model.state_dict(), md)
+            #         print("PERIODICALLY MODEL SAVE: Episode = {}".format(e))
 
         end_time = time.time()
         # SAVE EXPERIMENT DATA
@@ -126,10 +139,7 @@ class RLLocal:
     
     def sim_stuck(self, state):
         # store latest 20 state, if distance and heading not change in 20 steps, simulator is stucked
-        if self.state_size == 28:
-            self.check_stuck.append((state[-3], state[-4]))
-        else:
-            self.check_stuck.append((state[-1], state[-2]))
+        self.check_stuck.append((state[-1], state[-2]))
         
         first_element = self.check_stuck[0]
         if all(element == first_element for element in self.check_stuck):
@@ -140,7 +150,9 @@ class RLLocal:
 if __name__ == '__main__':
     """Train RL Model on Each Environment"""
     # For Stage 2, 3, 4, use 28 dim model input (obstacle_min_range, obstacle_angle)
-    if STAGE in (2, 3, 4, 5): 
+    if STAGE == 3:
+        state_size = 32
+    elif STAGE in (2, 4, 5): 
         state_size = 28
     else:
         state_size = 26

@@ -91,9 +91,9 @@ class TestTrainedModel:
                     rospy.loginfo('Ep: %d score: %.2f time: %f',
                                 e, score, s)
                     
-                    if reward == 200:
+                    if reward == 2000:
                         goal += 1
-                    elif reward == -200:
+                    elif reward == -2000:
                         collision += 1
 
                     break

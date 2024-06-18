@@ -17,10 +17,18 @@ class ReinforceAgent():
         self.episode_step = 6000
         self.discount_factor = 0.99
         self.learning_rate = 0.00025
+
         self.epsilon = 1.0
         self.epsilon_start = 0.95
-        self.epsilon_decay = 5000
+        self.epsilon_decay = 10000
         self.epsilon_end = 0.05
+
+        # self.epsilon = 1.0
+        # self.epsilon_decay = 0.99
+        # self.epsilon_min = 0.05
+
+        self.target_update = 300
+
         self.batch_size = 128
         self.train_start = 128
         self.memory = ReplayMemory(10000)
