@@ -139,7 +139,7 @@ class FRLClient:
                     break
 
                 self.global_step += 1
-                if self.agent.global_step % self.agent.target_update == 0:
+                if self.global_step % self.agent.target_update == 0:
                     self.agent.updateTargetModel()
                     rospy.loginfo("UPDATE TARGET NETWORK")
             # if agent.epsilon > agent.epsilon_min:
