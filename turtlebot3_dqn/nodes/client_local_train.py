@@ -11,6 +11,7 @@ Federated reinforcement learning client local training
 
 First, getting request (global model) from the FRL server, then, train it locally, finally upload the trained model to FRL server
 """
+from collections import deque
 import math
 import rospy
 import time
