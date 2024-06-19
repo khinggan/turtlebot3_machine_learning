@@ -118,13 +118,13 @@ class RLLocal:
                     rospy.loginfo("UPDATE TARGET NETWORK")
             # if self.agent.epsilon > self.agent.epsilon_min:
             #     self.agent.epsilon *= self.agent.epsilon_decay
-            # if e % 100 == 0:
-            #     save_dict_directory = os.environ['ROSFRLPATH'] + "model_dicts/saved_dict/"
-            #     if not os.path.exists(save_dict_directory):
-            #         os.makedirs(save_dict_directory)
-            #     with open(save_dict_directory + "RL_episode_{}_stage_{}_trained_{}.pkl".format(EPISODES, STAGE, e), 'wb') as md:
-            #         pickle.dump(self.agent.model.state_dict(), md)
-            #         print("PERIODICALLY MODEL SAVE: Episode = {}".format(e))
+            if e % 100 == 0:
+                save_dict_directory = os.environ['ROSFRLPATH'] + "model_dicts/saved_dict/"
+                if not os.path.exists(save_dict_directory):
+                    os.makedirs(save_dict_directory)
+                with open(save_dict_directory + "RL_episode_{}_stage_{}_trained_{}.pkl".format(EPISODES, STAGE, e), 'wb') as md:
+                    pickle.dump(self.agent.model.state_dict(), md)
+                    print("PERIODICALLY MODEL SAVE: Episode = {}".format(e))
 
         end_time = time.time()
         # SAVE EXPERIMENT DATA
@@ -150,9 +150,7 @@ class RLLocal:
 if __name__ == '__main__':
     """Train RL Model on Each Environment"""
     # For Stage 2, 3, 4, use 28 dim model input (obstacle_min_range, obstacle_angle)
-    if STAGE == 3:
-        state_size = 32
-    elif STAGE in (2, 4, 5): 
+    if STAGE in (2, 3, 4, 5): 
         state_size = 28
     else:
         state_size = 26
