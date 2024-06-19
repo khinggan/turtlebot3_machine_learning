@@ -36,8 +36,12 @@ TAU = 0.005
 
 class FRLClient:
     def __init__(self, state_size=26, action_size=5) -> None:
+        self.state_size = state_size
+        self.action_size = action_size
         self.env = Env(action_size)
         self.agent = ReinforceAgent(state_size, action_size)
+
+        self.global_step = 0
 
         self.hist_best_score = float('-inf')
         self.hist_best_model_dict = None
@@ -82,7 +86,7 @@ class FRLClient:
                     collision_times += 1
 
                 self.agent.appendMemory(state, action, reward, next_state)
-                
+
                 self.agent.trainModel()
 
                 score += reward
@@ -101,7 +105,7 @@ class FRLClient:
 
                 # update epsilon
                 self.agent.epsilon = self.agent.epsilon_end + (self.agent.epsilon_start - self.agent.epsilon_end) * \
-                                math.exp(-1. * self.agent.global_step / self.agent.epsilon_decay)
+                                math.exp(-1. * self.global_step / self.agent.epsilon_decay)
                 
                 # soft update target network
                 # target_net_state_dict = self.agent.target_model.state_dict()
@@ -124,24 +128,24 @@ class FRLClient:
                     rospy.loginfo('Ep: %d score: %.2f memory: %d epsilon: %.2f time: %f',
                                 e, score, len(self.agent.memory), self.agent.epsilon, s)
                     # save best model
-                    if score > self.hist_best_score:
-                        self.hist_best_score = score
-                        curr_best_score = score
-                        self.best_model_dict = self.agent.model.state_dict()
-                        curr_best_model_dict = self.agent.model.state_dict()
-                    if score > curr_best_score:
-                        curr_best_score = score
-                        curr_best_model_dict = self.agent.model.state_dict()
+                    # if score > self.hist_best_score:
+                    #     self.hist_best_score = score
+                    #     curr_best_score = score
+                    #     self.best_model_dict = self.agent.model.state_dict()
+                    #     curr_best_model_dict = self.agent.model.state_dict()
+                    # if score > curr_best_score:
+                    #     curr_best_score = score
+                    #     curr_best_model_dict = self.agent.model.state_dict()
                     break
 
-                self.agent.global_step += 1
+                self.global_step += 1
                 if self.agent.global_step % self.agent.target_update == 0:
                     self.agent.updateTargetModel()
                     rospy.loginfo("UPDATE TARGET NETWORK")
             # if agent.epsilon > agent.epsilon_min:
             #     agent.epsilon *= agent.epsilon_decay
         
-        # state = self.env.reset()
+        state = self.env.reset()
         end_time = time.time()
 
         # SAVE EXPERIMENT DATA
@@ -154,10 +158,12 @@ class FRLClient:
             # print([item for item in zip(scores, episodes, memory_lens, epsilons, episode_hours, episode_minutes, episode_seconds, collisions, goals)])
 
         print("Total Train Time on client {} is : {} seconds".format(CURR_CID, end_time - start_time))
-        if self.hist_best_score - curr_best_score < 20: 
-            trained_model_dict_pickle = pickle.dumps(curr_best_model_dict)
-        else: 
-            trained_model_dict_pickle = global_model_dict_pickle
+        # if self.hist_best_score - curr_best_score < 20: 
+        #     trained_model_dict_pickle = pickle.dumps(curr_best_model_dict)
+        # else: 
+        #     trained_model_dict_pickle = global_model_dict_pickle
+
+        trained_model_dict_pickle = pickle.dumps(self.agent.model.state_dict())
 
         response = LocalTrainResponse()
         response.resp = trained_model_dict_pickle
