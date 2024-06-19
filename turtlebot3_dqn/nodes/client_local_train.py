@@ -72,9 +72,9 @@ class FRLClient:
                 next_state, reward, done = self.env.step(action)
 
                 # check goal or collision
-                if reward == 200:
+                if reward == 2000:
                     goal_times += 1
-                if reward == -200:
+                if reward == -2000:
                     collision_times += 1
 
                 self.agent.appendMemory(state, action, reward, next_state)
@@ -93,11 +93,11 @@ class FRLClient:
                                 math.exp(-1. * self.agent.global_step / self.agent.epsilon_decay)
                 
                 # soft update target network
-                target_net_state_dict = self.agent.target_model.state_dict()
-                policy_net_state_dict = self.agent.model.state_dict()
-                for key in policy_net_state_dict:
-                    target_net_state_dict[key] = policy_net_state_dict[key]*TAU + target_net_state_dict[key]*(1-TAU)
-                self.agent.target_model.load_state_dict(target_net_state_dict)
+                # target_net_state_dict = self.agent.target_model.state_dict()
+                # policy_net_state_dict = self.agent.model.state_dict()
+                # for key in policy_net_state_dict:
+                #     target_net_state_dict[key] = policy_net_state_dict[key]*TAU + target_net_state_dict[key]*(1-TAU)
+                # self.agent.target_model.load_state_dict(target_net_state_dict)
 
                 if done:
                     scores.append(score)
@@ -105,16 +105,13 @@ class FRLClient:
                     episode_length.append(t)
                     memory_lens.append(len(self.agent.memory))
                     epsilons.append(self.agent.epsilon)
-                    m, s = divmod(int(time.time() - start_time), 60)
-                    h, m = divmod(m, 60)
-                    episode_hours.append(h)
-                    episode_minutes.append(m)
+                    s = int(time.time() - start_time)    # second
                     episode_seconds.append(s)
                     collisions.append(collision_times)
                     goals.append(goal_times)
 
-                    rospy.loginfo('Ep: %d score: %.2f memory: %d epsilon: %.2f time: %d:%02d:%02d',
-                                e, score, len(self.agent.memory), self.agent.epsilon, h, m, s)
+                    rospy.loginfo('Ep: %d score: %.2f memory: %d epsilon: %.2f time: %f',
+                                e, score, len(self.agent.memory), self.agent.epsilon, s)
                     # save best model
                     if score > self.hist_best_score:
                         self.hist_best_score = score
@@ -127,7 +124,9 @@ class FRLClient:
                     break
 
                 self.agent.global_step += 1
-
+                if self.agent.global_step % self.agent.target_update == 0:
+                    self.agent.updateTargetModel()
+                    rospy.loginfo("UPDATE TARGET NETWORK")
             # if agent.epsilon > agent.epsilon_min:
             #     agent.epsilon *= agent.epsilon_decay
         

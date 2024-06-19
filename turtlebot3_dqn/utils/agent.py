@@ -5,8 +5,8 @@ import numpy as np
 import random
 from ros1_ws.src.turtlebot3_machine_learning.turtlebot3_dqn.utils.models import ReplayMemory, DQN, Transition
 # If you want to use CUDA. But, make sure all machines has CUDA compatibility. Otherwise, use cpu
-device = ("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
-# device = "cpu"
+# device = ("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
+device = "cpu"
 print(f"Using {device} device")
 
 class ReinforceAgent():
