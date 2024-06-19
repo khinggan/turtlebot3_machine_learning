@@ -43,6 +43,9 @@ class FRLClient:
         
         self.local_train_service = rospy.Service('client_{}_local_train_service'.format(CURR_CID), LocalTrain, self.handle_local_train)
 
+        # check for simulation stuck; which may leads to high score in useless model
+        self.check_stuck = deque([i for i in range(20)], maxlen=20)
+
     def handle_local_train(self, request):
         # Train and return trained model dict
         global_model_dict_pickle = request.req
@@ -79,10 +82,17 @@ class FRLClient:
 
                 self.agent.appendMemory(state, action, reward, next_state)
                 
+                self.agent.trainModel()
+
                 score += reward
                 state = next_state
 
-                self.agent.trainModel()
+                
+
+                # check simulator stuck
+                if self.sim_stuck(state=state):
+                    score = -2000
+                    done = True
 
                 if t >= 240:
                     rospy.loginfo("Time out!!")
@@ -153,11 +163,25 @@ class FRLClient:
         response.cid = CURR_CID
         response.round = request.round
         return response
+    
+    def sim_stuck(self, state):
+        # store latest 20 state, if distance and heading not change in 20 steps, simulator is stucked
+        self.check_stuck.append((state[-1], state[-2]))
+        
+        first_element = self.check_stuck[0]
+        if all(element == first_element for element in self.check_stuck):
+            rospy.loginfo("!!!!!!!!Maybe Simulator is Stuck!!!!!!!!!")
+            return True
+        return False
 
 if __name__ == '__main__':
     """client service that get global model, train locally, then return local trained model"""
+    # For Stage 2, 3, 4, use 28 dim model input (obstacle_min_range, obstacle_angle)
+    if STAGE in (2, 3, 4, 5): 
+        state_size = 28
+    else:
+        state_size = 26
 
-    state_size = 26
     action_size = 5
 
     rospy.init_node('client_{}_local_train'.format(CURR_CID))
