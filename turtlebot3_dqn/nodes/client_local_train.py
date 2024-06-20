@@ -50,6 +50,8 @@ class FRLClient:
 
         self.new_best_score = False
 
+        self.local_train_service = rospy.Service('client_{}_local_train_service'.format(CURR_CID), LocalTrain, self.handle_local_train)
+
     def handle_local_train(self, request):
         # Train and return trained model dict
         global_model_dict_pickle = request.req
