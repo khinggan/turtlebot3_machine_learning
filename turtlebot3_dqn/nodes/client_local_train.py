@@ -38,18 +38,17 @@ class FRLClient:
     def __init__(self, state_size=26, action_size=5) -> None:
         self.state_size = state_size
         self.action_size = action_size
-        self.env = Env(action_size)
         self.agent = ReinforceAgent(state_size, action_size)
-
-        self.global_step = 0
-
-        self.hist_best_score = float('-inf')
-        self.hist_best_model_dict = None
+        self.env = Env(action_size)
         
-        self.local_train_service = rospy.Service('client_{}_local_train_service'.format(CURR_CID), LocalTrain, self.handle_local_train)
+        self.global_step = 0
+        self.best_score = float('-inf')
+        self.best_model_dict = None
 
         # check for simulation stuck; which may leads to high score in useless model
         self.check_stuck = deque([i for i in range(20)], maxlen=20)
+
+        self.new_best_score = False
 
     def handle_local_train(self, request):
         # Train and return trained model dict
@@ -57,14 +56,11 @@ class FRLClient:
         global_model_dict = pickle.loads(global_model_dict_pickle)
         print("#### ROUND {}: CLIENT {} local train on Stage {} #### ".format(request.round, CURR_CID, STAGE))
 
-        curr_best_score = float('-inf')
-        curr_best_model_dict = None
-
         # Initialize agent model with global model dict, update target model
         self.agent.model.load_state_dict(global_model_dict)
         self.agent.updateTargetModel()
         
-        scores, episodes, episode_length, memory_lens, epsilons, episode_hours, episode_minutes, episode_seconds, collisions, goals = [], [], [], [], [], [], [], [], [], []
+        episodes, scores, memory_lens, epsilons, episode_seconds = [], [], [], [], []
 
         # start train EPISODES episodes
         start_time = time.time()
@@ -72,40 +68,34 @@ class FRLClient:
             done = False
             state = self.env.reset()
             score = 0.0
-            collision_times = 0
-            goal_times = 0
+
+            # pdb.set_trace()
+
             for t in range(self.agent.episode_step):
                 action = self.agent.getAction(state)
 
                 next_state, reward, done = self.env.step(action)
 
-                # check goal or collision
-                if reward == 2000:
-                    goal_times += 1
-                if reward == -2000:
-                    collision_times += 1
-
                 self.agent.appendMemory(state, action, reward, next_state)
 
                 self.agent.trainModel()
-
+                
                 score += reward
                 state = next_state
-
-                
 
                 # check simulator stuck
                 if self.sim_stuck(state=state):
                     score = -2000
                     done = True
-
+                
                 if t >= 240:
                     rospy.loginfo("Time out!!")
                     done = True
 
-                # update epsilon
-                self.agent.epsilon = self.agent.epsilon_end + (self.agent.epsilon_start - self.agent.epsilon_end) * \
-                                math.exp(-1. * self.global_step / self.agent.epsilon_decay)
+                # # update epsilon
+                self.agent.epsilon = self.agent.epsilon_end + \
+                                    (self.agent.epsilon_start - self.agent.epsilon_end) * \
+                                    math.exp(-1. * self.global_step / self.agent.epsilon_decay)
                 
                 # soft update target network
                 # target_net_state_dict = self.agent.target_model.state_dict()
@@ -117,25 +107,20 @@ class FRLClient:
                 if done:
                     scores.append(score)
                     episodes.append(e)
-                    episode_length.append(t)
                     memory_lens.append(len(self.agent.memory))
                     epsilons.append(self.agent.epsilon)
                     s = int(time.time() - start_time)    # second
                     episode_seconds.append(s)
-                    collisions.append(collision_times)
-                    goals.append(goal_times)
 
                     rospy.loginfo('Ep: %d score: %.2f memory: %d epsilon: %.2f time: %f',
                                 e, score, len(self.agent.memory), self.agent.epsilon, s)
+                
                     # save best model
-                    # if score > self.hist_best_score:
-                    #     self.hist_best_score = score
-                    #     curr_best_score = score
-                    #     self.best_model_dict = self.agent.model.state_dict()
-                    #     curr_best_model_dict = self.agent.model.state_dict()
-                    # if score > curr_best_score:
-                    #     curr_best_score = score
-                    #     curr_best_model_dict = self.agent.model.state_dict()
+                    if score > self.best_score:
+                        self.best_score = score
+                        self.best_model_dict = self.agent.model.state_dict()
+                        self.new_best_score = True
+                        rospy.loginfo("New Best Score: {}, saved best model!!".format(self.best_score))
                     break
 
                 self.global_step += 1
@@ -154,16 +139,14 @@ class FRLClient:
             os.makedirs(directory_path)
         with open(directory_path + "FRL_localep_{}_totalround_{}_client_{}_stage_{}.csv".format(LOCAL_EPISODES,  ROUND, CURR_CID, STAGE), 'a') as d:
             writer = csv.writer(d)
-            writer.writerows([item for item in zip(scores, episodes, memory_lens, epsilons, episode_hours, episode_minutes, episode_seconds, collisions, goals)])
-            # print([item for item in zip(scores, episodes, memory_lens, epsilons, episode_hours, episode_minutes, episode_seconds, collisions, goals)])
+            writer.writerows([item for item in zip(scores, episodes, memory_lens, epsilons, episode_seconds)])
 
         print("Total Train Time on client {} is : {} seconds".format(CURR_CID, end_time - start_time))
-        # if self.hist_best_score - curr_best_score < 20: 
-        #     trained_model_dict_pickle = pickle.dumps(curr_best_model_dict)
-        # else: 
-        #     trained_model_dict_pickle = global_model_dict_pickle
-
-        trained_model_dict_pickle = pickle.dumps(self.agent.model.state_dict())
+        if self.new_best_score: 
+            trained_model_dict_pickle = pickle.dumps(self.best_model_dict)
+            self.new_best_score = False
+        else: 
+            trained_model_dict_pickle = pickle.dumps(self.agent.model.state_dict())
 
         response = LocalTrainResponse()
         response.resp = trained_model_dict_pickle
@@ -188,7 +171,6 @@ if __name__ == '__main__':
         state_size = 28
     else:
         state_size = 26
-
     action_size = 5
 
     rospy.init_node('client_{}_local_train'.format(CURR_CID))
