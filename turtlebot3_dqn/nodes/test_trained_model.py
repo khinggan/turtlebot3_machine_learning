@@ -79,7 +79,7 @@ class TestTrainedModel:
                 score += reward
                 state = next_state
 
-                if t >= 240:
+                if t >= 500:
                     rospy.loginfo("Time out!!")
                     done = True
 
