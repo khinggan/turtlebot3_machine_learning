@@ -132,11 +132,9 @@ class Env():
         # r_distance = (2 * goal_dist_initial) / (goal_dist_initial + goal_dist) - 1   # distance reward
 
         # reward = r_goal_angle + r_distance + r_vangular - 1
+        # r_t = t if t < 200 else 200
 
-        r_distance = (-1.0) * goal_dist
-        r_t = t if t < 200 else 200
-
-        reward = r_goal_angle + r_distance + r_t
+        reward = r_goal_angle * goal_dist
 
         if collide:
             rospy.loginfo("------------- x Collision x -------------")
