@@ -28,6 +28,7 @@ from ros1_ws.src.turtlebot3_machine_learning.turtlebot3_dqn.utils.agent import R
 config = yaml_config()        # stages = config['FRL']['server']['stages']
 CURR_CID = config['FRL']['client']['curr_cid'] if config['FRL']['client']['curr_cid'] is not None else 1
 STAGE = config['FRL']['client']['stage'] if config['FRL']['client']['stage'] is not None else 1
+STAGES = config['FRL']['server']['stages']
 LOCAL_EPISODES = config['FRL']['client']['local_episode'] if config['FRL']['client']['local_episode'] is not None else 2
 ROUND = config['FRL']['server']['round'] if config['FRL']['server']['round'] is not None else 2
 stage_module_name = f'src.turtlebot3_dqn.environment_stage_{STAGE}'
@@ -139,7 +140,7 @@ class FRLClient:
         directory_path = os.environ['ROSFRLPATH'] + "data/"
         if not os.path.exists(directory_path):
             os.makedirs(directory_path)
-        with open(directory_path + "FRL_localep_{}_totalround_{}_client_{}_stage_{}.csv".format(LOCAL_EPISODES,  ROUND, CURR_CID, STAGE), 'a') as d:
+        with open(directory_path + "FRL_localep_{}_totalround_{}_client_{}_stage_{}_stages{}.csv".format(LOCAL_EPISODES,  ROUND, CURR_CID, STAGE, STAGES), 'a') as d:
             writer = csv.writer(d)
             writer.writerows([item for item in zip(scores, episodes, memory_lens, epsilons, episode_seconds)])
 
