@@ -29,7 +29,8 @@ from tf.transformations import euler_from_quaternion, quaternion_from_euler
 from .respawnGoal import Respawn
 
 class Env():
-    def __init__(self, action_size):
+    def __init__(self, action_size, stage):
+        self.stage = stage
         self.goal_x = 0
         self.goal_y = 0
         self.heading = 0
@@ -73,12 +74,31 @@ class Env():
         done = False
 
         for i in range(len(scan.ranges)):
-            if scan.ranges[i] == float('Inf'):
+            if scan.ranges[i] == float('Inf') or np.isnan(scan.ranges[i]):
                 scan_range.append(3.5)
-            elif np.isnan(scan.ranges[i]):
-                scan_range.append(0)
             else:
                 scan_range.append(scan.ranges[i])
+
+        obstacle_min_range = round(min(scan_range), 2)
+        obstacle_angle = np.argmin(scan_range)
+
+        # obstacle_angle = np.argmin(scan_range)
+
+        # min_index = np.argmin(obstacle_angle)
+        # if 1 <= min_index <=22:
+        #     start_index = min_index - 1
+        #     end_index = min_index + 2
+        # elif 0 <= min_index < 1:
+        #     start_index = 0
+        #     end_index = 3
+        # elif 22 < min_index <= 24:
+        #     start_index = 21
+        #     end_index = 24
+        # else:
+        #     print("ERROR")
+
+        # obstacle_min_ranges = scan_range[start_index:end_index]
+        # obstacle_angles = list(range(start_index, end_index))
 
         if min_range > min(scan_range) > 0:
             done = True
@@ -86,8 +106,11 @@ class Env():
         current_distance = round(math.hypot(self.goal_x - self.position.x, self.goal_y - self.position.y),2)
         if current_distance < 0.2:
             self.get_goalbox = True
-
-        return scan_range + [heading, current_distance], done
+        if self.stage in (2, 3, 4):
+            return_stage = scan_range + [obstacle_min_range, obstacle_angle, heading, current_distance], done
+        else:
+            return_stage = scan_range + [heading, current_distance], done
+        return return_stage
 
     def setReward(self, state, done, action):
         yaw_reward = []
@@ -100,16 +123,22 @@ class Env():
             yaw_reward.append(tr)
 
         distance_rate = 2 ** (current_distance / self.goal_distance)
-        reward = ((round(yaw_reward[action] * 5, 2)) * distance_rate)
+
+        obstacle_reward = - math.exp(3.5-state[-4]) + 0.5          # state[-4]: obstacle distance = min(scan_range)
+
+        reward = ((round(yaw_reward[action] * 5, 2)) * distance_rate) + obstacle_reward
 
         if done:
             rospy.loginfo("Collision!!")
-            reward = -200
+            reward = -2000
             self.pub_cmd_vel.publish(Twist())
+            self.goal_x, self.goal_y = self.respawn_goal.getPosition(True, delete=True)
+            self.goal_distance = self.getGoalDistace()
+            self.get_goalbox = False
 
         if self.get_goalbox:
-            rospy.loginfo("Goal!!")
-            reward = 200
+            rospy.loginfo("Goooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooal")
+            reward = 2000
             self.pub_cmd_vel.publish(Twist())
             self.goal_x, self.goal_y = self.respawn_goal.getPosition(True, delete=True)
             self.goal_distance = self.getGoalDistace()
@@ -135,6 +164,8 @@ class Env():
 
         state, done = self.getState(data)
         reward = self.setReward(state, done, action)
+        if reward == 2000: 
+            done = True
 
         return np.asarray(state), reward, done
 

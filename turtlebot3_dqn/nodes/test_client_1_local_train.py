@@ -31,9 +31,12 @@ import time
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from collections import deque, namedtuple
-from std_msgs.msg import Float32MultiArray
+from std_msgs.msg import Float64
 from src.turtlebot3_dqn.environment_stage_1 import Env
-from turtlebot3_dqn.srv import PtModel,PtModelRequest
+# from turtlebot3_dqn.srv import PtModel,PtModelRequest, PtModelResponse
+from turtlebot3_dqn.srv import S2CPtModel, S2CPtModelRequest, S2CPtModelResponse
+from turtlebot3_dqn.srv import C2SPtModel, C2SPtModelRequest, C2SPtModelResponse
+from turtlebot3_dqn.srv import LocalTrain, LocalTrainRequest, LocalTrainResponse
 import pickle
 
 import os
@@ -42,19 +45,26 @@ from torch import nn
 import torch.optim as optim
 import torch.nn.functional as F
 
-device = (
-    "cuda"
-    if torch.cuda.is_available()
-    else "mps"
-    if torch.backends.mps.is_available()
-    else "cpu"
-)
 
-# device = "cpu"
+# Global Variables
+# device = (
+#     "cuda"
+#     if torch.cuda.is_available()
+#     else "mps"
+#     if torch.backends.mps.is_available()
+#     else "cpu"
+# )
+device = "cpu"
 print(f"Using {device} device")
 
 Transition = namedtuple('Transition', ('state', 'action', 'reward', 'next_state'))
 
+# need to change EPISODES, CLIENT_ID
+EPISODES = 100
+CLIENT_ID = 1
+state_size = 26
+action_size = 5
+env = Env(action_size)
 
 class ReplayMemory(object):
 
@@ -86,21 +96,14 @@ class DQN(nn.Module):
         x = F.relu(self.layer2(x))
         return self.layer3(x)
 
-EPISODES = 3000
-
 class ReinforceAgent():
     def __init__(self, state_size, action_size):
-        self.pub_result = rospy.Publisher('result', Float32MultiArray, queue_size=5)
-        self.dirPath = os.path.dirname(os.path.realpath(__file__))
-        self.dirPath = self.dirPath.replace('turtlebot3_dqn/nodes', 'turtlebot3_dqn/save_model/stage_1_')
-        self.result = Float32MultiArray()
-
         self.load_model = False
         self.load_episode = 0
         self.state_size = state_size
         self.action_size = action_size
         self.episode_step = 6000
-        self.target_update = 2000
+        self.target_update = 300
         self.discount_factor = 0.99
         self.learning_rate = 0.00025
         self.epsilon = 1.0
@@ -111,8 +114,6 @@ class ReinforceAgent():
         self.memory = ReplayMemory(10000)
 
         self.model = DQN(self.state_size, self.action_size).to(device)
-        # with open('filename.pickle', 'wb') as handle:
-        #     pickle.dump(self.model.state_dict(), handle, protocol=pickle.HIGHEST_PROTOCOL)
         self.target_model = DQN(self.state_size, self.action_size).to(device)
         self.updateTargetModel()
 
@@ -197,45 +198,29 @@ class ReinforceAgent():
         # In-place gradient clipping
         torch.nn.utils.clip_grad_value_(self.model.parameters(), 100)
         self.optimizer.step()
+
+pub_result = rospy.Publisher('/result', Float64, queue_size=5)
+result = Float64()
+agent = ReinforceAgent(state_size, action_size)
+
+def start_train(request):
+    global_model_dict = request.req
+    model_dict = pickle.loads(global_model_dict)
+    # for key, value in model_dict.items():
+    #     print(key, value.size())
+
+    print("Client {} Round {}".format(CLIENT_ID, request.round))
+
+    # Initialize agent model with global model dict
+    agent.model.load_state_dict(model_dict)
+    agent.updateTargetModel()
     
-    def uploadModel(self):
-        rospy.wait_for_service('get_model_upload')
-        
-        model_dict = self.model.state_dict()
-        for key, value in model_dict.items():
-            print(key, value.size())
-
-        # Serializing the OrderedDict to bytes
-        serial_model = pickle.dumps(model_dict)
-
-        req = PtModelRequest()
-        req.req = serial_model
-
-        try:
-            client = rospy.ServiceProxy('get_model_upload', PtModel)
-            resp = client(req)
-            rospy.loginfo("The response data is: %s", resp)
-        except rospy.ServiceException as e:
-            print("Service call failed: %s"%e)
-
-if __name__ == '__main__':
-    rospy.init_node('turtlebot3_dqn_stage_1')
-    pub_result = rospy.Publisher('result', Float32MultiArray, queue_size=5)
-    pub_get_action = rospy.Publisher('get_action', Float32MultiArray, queue_size=5)
-    result = Float32MultiArray()
-    get_action = Float32MultiArray()
-
-    state_size = 26
-    action_size = 5
-
-    env = Env(action_size)
-
-    agent = ReinforceAgent(state_size, action_size)
     scores, episodes = [], []
     global_step = 0
-    start_time = time.time()
 
-    for e in range(agent.load_episode + 1, EPISODES):
+    # start train EPISODES episodes
+    start_time = time.time()
+    for e in range(agent.load_episode, EPISODES):
         done = False
         state = env.reset()
         state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
@@ -250,31 +235,16 @@ if __name__ == '__main__':
 
             agent.appendMemory(state, action, reward, next_state)
 
-            # if len(agent.memory) >= agent.train_start:
-            #     if global_step <= agent.target_update:
-            #         agent.trainModel()
-            #     else:
-            #         agent.trainModel(True)
             agent.trainModel()
             score += reward
             state = next_state
-            get_action.data = [action, score, reward]
-            pub_get_action.publish(get_action)
-
-            if e % 100 == 0:
-                rospy.loginfo("Save mode after {} episodes".format(e))
-                # agent.model.save(agent.dirPath + str(e) + '.h5')
-                # with open(agent.dirPath + str(e) + '.json', 'w') as outfile:
-                #     json.dump(param_dictionary, outfile)
-
-                #######################upload model to server#######################
 
             if t >= 500:
                 rospy.loginfo("Time out!!")
                 done = True
 
             if done:
-                result.data = [score]  # original version: result.data = [score, np.max(agent.q_value)]
+                result.data = score  # original version: result.data = [score, np.max(agent.q_value)]
                 pub_result.publish(result)
                 agent.updateTargetModel()
                 scores.append(score)
@@ -284,13 +254,6 @@ if __name__ == '__main__':
 
                 rospy.loginfo('Ep: %d score: %.2f memory: %d epsilon: %.2f time: %d:%02d:%02d',
                               e, score, len(agent.memory), agent.epsilon, h, m, s)
-                param_keys = ['epsilon']
-                param_values = [agent.epsilon]
-                param_dictionary = dict(zip(param_keys, param_values))
-
-                ######################test: Upload model in here######################
-                agent.uploadModel()
-
                 break
 
             global_step += 1
@@ -299,3 +262,31 @@ if __name__ == '__main__':
 
         if agent.epsilon > agent.epsilon_min:
             agent.epsilon *= agent.epsilon_decay
+    
+    state = env.reset()
+    end_time = time.time()
+
+    print("Total Train Time on client {} is : {} seconds".format(CLIENT_ID, end_time - start_time))
+    compressed_model_dict = pickle.dumps(agent.model.state_dict())
+    return compressed_model_dict
+
+def handle_local_train(request):
+    trained_model_dict = start_train(request)
+
+    response = LocalTrainResponse()
+
+    response.resp = trained_model_dict
+    response.cid = CLIENT_ID
+    response.round = request.round
+    return response
+
+
+def client_local_train():
+    rospy.init_node('client_{}_local_train'.format(CLIENT_ID))
+
+    s = rospy.Service('client_{}_local_train_service'.format(CLIENT_ID), LocalTrain, handle_local_train)
+    print("Client {} Train global model".format(CLIENT_ID))
+    rospy.spin()
+
+if __name__ == '__main__':
+    client_local_train()
