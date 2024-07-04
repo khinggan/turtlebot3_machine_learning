@@ -27,7 +27,7 @@ from geometry_msgs.msg import Pose
 
 from script.read_config import yaml_config
 config = yaml_config()  
-STAGE = config['RL']['stage']
+ENV = config['RL']['env']
 
 class Respawn():
     def __init__(self):
@@ -86,7 +86,7 @@ class Respawn():
         if delete:
             self.deleteModel()
 
-        if STAGE != "4":
+        if ENV != "4":
             while position_check:
                 goal_x = random.randrange(-12, 13) / 10.0
                 goal_y = random.randrange(-12, 13) / 10.0
