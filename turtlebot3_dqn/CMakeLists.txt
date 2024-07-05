@@ -49,20 +49,15 @@ include_directories(
 # Install
 ################################################################################
 catkin_install_python(PROGRAMS
-  nodes/turtlebot3_dqn_stage_1
-  nodes/turtlebot3_dqn_stage_2
-  nodes/turtlebot3_dqn_stage_3
-  nodes/turtlebot3_dqn_stage_4
-  nodes/result_graph
-  nodes/action_graph
-  nodes/moving_obstacle
-  nodes/save_result.py
-  nodes/combination_obstacle_1
-  nodes/combination_obstacle_2
-  src/${PROJECT_NAME}/environment_stage_1.py
-  src/${PROJECT_NAME}/environment_stage_2.py
-  src/${PROJECT_NAME}/environment_stage_3.py
-  src/${PROJECT_NAME}/environment_stage_4.py
+  nodes/client.py
+  nodes/moving_obstacle.py
+  nodes/combination_obstacle_1.py
+  nodes/combination_obstacle_2.py
+  nodes/rl_local.py
+  nodes/test.py
+  src/${PROJECT_NAME}/environment_stage_5.py
+  src/${PROJECT_NAME}/environment_train.py
+  src/${PROJECT_NAME}/environment_test.py
   src/${PROJECT_NAME}/respawnGoal.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

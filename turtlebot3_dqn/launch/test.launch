@@ -1,0 +1,11 @@
+<launch>
+  <arg name="env" default="1"/>
+  <node pkg="turtlebot3_dqn" type="test.py" name="test" output="screen"/>
+
+  <!-- Env 3 use -->
+  <node if="$(eval arg('env') == 3)" pkg="turtlebot3_dqn"  type="moving_obstacle.py" name="moving_obstacle" output="screen" />
+
+  <!-- Env 4 use -->
+  <!-- <node pkg="turtlebot3_dqn" type="combination_obstacle_1.py" name="combination_obstacle_1" output="screen" />
+  <node pkg="turtlebot3_dqn" type="combination_obstacle_2.py" name="combination_obstacle_2" output="screen" /> -->
+</launch>

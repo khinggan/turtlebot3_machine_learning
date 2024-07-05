@@ -23,8 +23,7 @@ ENV = config['RL']['env']
 EPS = config['RL']['eps']
 MODEL = config['MODEL']
 
-env_module = f'ros1_ws.src.turtlebot3_machine_learning.turtlebot3_dqn.src.turtlebot3_dqn.environment_stage_{ENV}'
-Env = getattr(importlib.import_module(env_module), 'Env')
+from ros1_ws.src.turtlebot3_machine_learning.turtlebot3_dqn.src.turtlebot3_dqn.environment_train import Env
 agent_module = 'ros1_ws.src.turtlebot3_machine_learning.turtlebot3_dqn.utils.agent'
 Agent = getattr(importlib.import_module(agent_module), f'{MODEL}Agent')
 
