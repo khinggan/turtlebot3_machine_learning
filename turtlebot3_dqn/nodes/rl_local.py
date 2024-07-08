@@ -39,6 +39,8 @@ class RLLocal:
         self.global_step = 0
         self.best_score = float('-inf')
         self.best_model_dict = None
+        self.score_queue = deque([], maxlen=10)
+        self.model_queue = deque([], maxlen=10)
 
         # check for simulation stuck; which may leads to high score in useless model
         self.check_stuck = deque([i for i in range(20)], maxlen=20)
@@ -98,18 +100,10 @@ class RLLocal:
 
                     rospy.loginfo('Ep: %d score: %.2f memory: %d epsilon: %.2f time: %f',
                                 e, score, len(self.agent.memory), self.agent.epsilon, s)
-                
-                    # save best model
-                    if score > self.best_score:
-                        self.best_score = score
-                        self.best_model_dict = self.agent.model.state_dict()
-                        # SAVE TRAINED DICT
-                        save_dict_directory = os.environ['ROSFRLPATH'] + "model_dicts/saved_dict/"
-                        if not os.path.exists(save_dict_directory):
-                            os.makedirs(save_dict_directory)
-                        with open(save_dict_directory + "RL_{}_{}eps_env{}.pkl".format(MODEL, EPS, ENV), 'wb') as md:
-                            pickle.dump(self.agent.model.state_dict(), md)
-                            print("BEST SCORE MODEL SAVE: Episode = {}, Best Score = {}".format(e, self.best_score))
+                    
+                    self.score_queue.append(score)
+                    self.model_queue.append(self.agent.model.state_dict())
+                    
                     break
 
                 self.global_step += 1
@@ -119,12 +113,32 @@ class RLLocal:
             # if self.agent.epsilon > self.agent.epsilon_min:
             #     self.agent.epsilon *= self.agent.epsilon_decay
 
+            # Get Best Model
+            if e % 10 == 0:
+                mean_score = sum(self.score_queue) / len(self.score_queue)
+                # save best model
+                if mean_score > self.best_score:
+                    self.best_score = mean_score
+                    # get corresponding model dict
+                    max_score = max(self.score_queue)
+                    max_score_ind = self.score_queue.index(max_score)
+                    self.best_model_dict = self.model_queue[max_score_ind]
+                    
+                    # SAVE TRAINED DICT
+                    save_dict_directory = os.environ['ROSFRLPATH'] + "model_dicts/saved_dict/"
+                    if not os.path.exists(save_dict_directory):
+                        os.makedirs(save_dict_directory)
+                    with open(save_dict_directory + "RL_{}_{}eps_env{}.pkl".format(MODEL, EPS, ENV), 'wb') as md:
+                        pickle.dump(self.best_model_dict, md)
+                        print("BEST SCORE MODEL SAVE: Episode = {}, Best Score = {}".format(e, self.best_score))
+
+
         end_time = time.time()
         # SAVE EXPERIMENT DATA
         directory_path = os.environ['ROSFRLPATH'] + "data/"
         if not os.path.exists(directory_path):
             os.makedirs(directory_path)
-        with open(directory_path + "RL_{}_{}eps_env_{}s.csv".format(MODEL, EPS, ENV), 'a') as d:
+        with open(directory_path + "RL_{}_{}eps_env_{}.csv".format(MODEL, EPS, ENV), 'a') as d:
             writer = csv.writer(d)
             writer.writerows([item for item in zip(scores, episodes, memory_lens, epsilons, episode_seconds)])
 

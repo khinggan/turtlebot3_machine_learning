@@ -6,6 +6,7 @@
 """Modification of ROBOTIS turtlebot3_machine_learning algorithm to PyTorch version 
 according to PyTorch Official Tutorial of Reinforcement Learning: https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
 """
+import importlib
 import torch
 import rospy
 import time
@@ -15,41 +16,45 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import pickle
 
 from script.read_config import yaml_config
-from ros1_ws.src.turtlebot3_machine_learning.turtlebot3_dqn.utils.agent import ReinforceAgent, device
+from ros1_ws.src.turtlebot3_machine_learning.turtlebot3_dqn.utils.agent import device
 
-config = yaml_config()        # stages = config['RL']['stage']
+config = yaml_config()
+
+MODEL = config['MODEL']
 
 # TEST
-TEST_STAGE = config['TEST']['stage']               # Test stage
-TEST_EPOCHES = config['TEST']['test_epoches']     # Test episodes
+TEST_STAGE = config['TEST']['env']               # Test environment
+TEST_EPOCHES = config['TEST']['eps']             # Test episodes
 TYPE = config['TEST']['type']
 
 # RL
-TRAINED_EPISODES = config['RL']['episodes']
-TRAINED_STAGE = config['RL']['stage']
+EPS = config['RL']['eps']
+ENV = config['RL']['env']
 
 # FRL
-LOCAL_EPISODES = config['FRL']['client']['local_episode']
-ROUND = config['FRL']['server']['round']
-STAGES = config['FRL']['server']['stages']
+# LOCAL_EPISODES = config['FRL']['client']['local_episode']
+# ROUND = config['FRL']['server']['round']
+# STAGES = config['FRL']['server']['stages']
 
 from ros1_ws.src.turtlebot3_machine_learning.turtlebot3_dqn.src.turtlebot3_dqn.environment_test import Env
 
-from ros1_ws.src.turtlebot3_machine_learning.turtlebot3_dqn.utils.agent import ReinforceAgent
+agent_module = 'ros1_ws.src.turtlebot3_machine_learning.turtlebot3_dqn.utils.agent'
+Agent = getattr(importlib.import_module(agent_module), f'{MODEL}Agent')
 
 class TestTrainedModel:
     def __init__(self, state_size=26, action_size=5) -> None:
         self.state_size = state_size
         self.action_size = action_size
-        self.agent = ReinforceAgent(state_size, action_size)
-        self.env = Env(action_size, TRAINED_STAGE)
+        self.agent = Agent(state_size, action_size)
+        self.env = Env(action_size, ENV)
 
     def test_trained_model(self):
         # load trained dict
         if TYPE == 'RL':
-            model_dict_file_name = "{}_episode_{}_stage_{}.pkl".format(TYPE, TRAINED_EPISODES, TRAINED_STAGE)
+            model_dict_file_name = "RL_{}_{}eps_env{}.pkl".format(MODEL, EPS, ENV)
         elif TYPE == 'FRL':
-            model_dict_file_name = "{}_localep_{}_totalround_{}_stages_{}.pkl".format(TYPE, LOCAL_EPISODES, ROUND, STAGES)
+            # model_dict_file_name = "{}_localep_{}_totalround_{}_stages_{}.pkl".format(TYPE, LOCAL_EPISODES, ROUND, STAGES)
+            print("FRL")
         else:
             print("FAIL TO LOAD TRAINED MODEL!!!!")
         
@@ -105,7 +110,7 @@ class TestTrainedModel:
 if __name__ == '__main__':
     """Train RL Model on Each Environment"""
     # For Stage 2, 3, 4, use 28 dim model input (obstacle_min_range, obstacle_angle)
-    if TRAINED_STAGE in (2, 3, 4) or TYPE == "FRL": 
+    if ENV in (2, 3, 4) or TYPE == "FRL": 
         state_size = 28
     else:
         state_size = 26
@@ -114,5 +119,5 @@ if __name__ == '__main__':
     rospy.init_node('test_trained_model')
     rl_local = TestTrainedModel(state_size=state_size, action_size=action_size)
     rl_local.test_trained_model()
-    rospy.loginfo("Test RL Model Trained on Stage {} Finished".format(TRAINED_STAGE))
+    rospy.loginfo("Test RL Model Trained on Stage {} Finished".format(ENV))
     rospy.spin()

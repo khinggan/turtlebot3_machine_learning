@@ -1,3 +1,4 @@
+import torch
 import random
 from collections import deque, namedtuple
 Transition = namedtuple('Transition', ('state', 'action', 'reward', 'next_state'))
@@ -19,6 +20,7 @@ class ReplayMemory(object):
     def __len__(self):
         return len(self.memory)
 
+# Used for DQN and DDQN
 class DQN(nn.Module):
     def __init__(self, n_observations, n_actions):
         super(DQN, self).__init__()
@@ -35,27 +37,19 @@ class DQN(nn.Module):
 
 class DuelDQN(nn.Module):
     def __init__(self, n_observations, n_actions):
-        super(DQN, self).__init__()
+        super(DuelDQN, self).__init__()
         self.layer1 = nn.Linear(n_observations, 128)
         self.layer2 = nn.Linear(128, 128)
-        self.layer3 = nn.Linear(128, n_actions)
+        self.V = nn.Linear(128, 1)
+        self.A = nn.Linear(128, n_actions)
 
     def forward(self, x):
         x = F.relu(self.layer1(x))
         x = F.relu(self.layer2(x))
-        return self.layer3(x)
-    
-class RainbowDQN(nn.Module):
-    def __init__(self, n_observations, n_actions):
-        super(DQN, self).__init__()
-        self.layer1 = nn.Linear(n_observations, 128)
-        self.layer2 = nn.Linear(128, 128)
-        self.layer3 = nn.Linear(128, n_actions)
-
-    def forward(self, x):
-        x = F.relu(self.layer1(x))
-        x = F.relu(self.layer2(x))
-        return self.layer3(x)
+        V = self.V(x)  # batch_size X 1
+        A = self.A(x)  # batch_size X action_dim
+        Q = V + (A - torch.mean(A, dim=-1, keepdim=True))  # Q(s,a)=V(s)+A(s,a)-mean(A(s,a))
+        return Q
     
 class DDPG(nn.Module):
     def __init__(self, n_observations, n_actions):
