@@ -26,9 +26,13 @@ from gazebo_msgs.msg import ModelStates
 from geometry_msgs.msg import Pose
 
 from script.read_config import yaml_config
-config = yaml_config()  
-ENV = config['RL']['env']
-
+config = yaml_config()
+if config['MODE'] == 'TRAIN':
+    ENV = config['RL']['env']
+elif config['MODE'] == 'TEST':
+    ENV = config['TEST']['env']
+else:
+    ENV = 0
 class Respawn():
     def __init__(self):
         self.modelPath = os.path.dirname(os.path.realpath(__file__))
@@ -86,10 +90,20 @@ class Respawn():
         if delete:
             self.deleteModel()
 
-        if ENV != "4":
+        if ENV == 0:
+            rospy.loginfo("!!!!!!!!!!!!!!!!!!!!!ENVIRONMENT IS ERROR!!!!!!!!!!!!!!!!!!!!!")
+
+        if ENV in (1, 2, 3):
             while position_check:
                 goal_x = random.randrange(-12, 13) / 10.0
                 goal_y = random.randrange(-12, 13) / 10.0
+
+                # goal_x = random.uniform(-1.2, -0.6) if random.random() < 0.5 else random.uniform(0.6, 1.3)
+                # goal_y = random.uniform(-1.2, -0.6) if random.random() < 0.5 else random.uniform(0.6, 1.3)
+
+                # goal_x = random.randrange(-6, 13) / 10.0
+                # goal_y = random.uniform(-1.2, -0.6) if random.random() < 0.5 else random.uniform(0.6, 1.3)
+
                 if abs(goal_x - self.obstacle_1[0]) <= 0.4 and abs(goal_y - self.obstacle_1[1]) <= 0.4:
                     position_check = True
                 elif abs(goal_x - self.obstacle_2[0]) <= 0.4 and abs(goal_y - self.obstacle_2[1]) <= 0.4:
@@ -109,7 +123,7 @@ class Respawn():
                 self.goal_position.position.x = goal_x
                 self.goal_position.position.y = goal_y
 
-        else:
+        elif ENV == 4:
             while position_check:
                 goal_pose_list = [[1.0, 0.0], [2.0, -1.5], [0.0, -2.0], [2.0, 2.0], [0.8, 2.0],
                                   [-1.9, 1.9], [-1.9,  0.2], [-1.9, -0.5], [-2.0, -2.0], [-0.5, -1.0],
@@ -135,6 +149,18 @@ class Respawn():
                 #     position_check = False
                 # self.goal_position.position.x = goal_x_list[self.index]
                 # self.goal_position.position.y = goal_y_list[self.index]
+        elif ENV == 5:
+            while position_check:
+                goal_pose_list = [[2.5, -2.5], [3, -2], [4, -2], [4, -3], [2.5, -1]]
+                self.index = random.randrange(0, len(goal_pose_list))
+                print(self.index, self.last_index)
+                if self.last_index == self.index:
+                    position_check = True
+                else:
+                    self.last_index = self.index
+                    position_check = False
+                self.goal_position.position.x = goal_pose_list[self.index][0]
+                self.goal_position.position.y = goal_pose_list[self.index][1]
 
         time.sleep(0.5)
         self.respawnModel()
