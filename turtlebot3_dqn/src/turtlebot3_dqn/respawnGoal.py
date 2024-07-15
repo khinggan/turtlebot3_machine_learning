@@ -161,6 +161,18 @@ class Respawn():
                     position_check = False
                 self.goal_position.position.x = goal_pose_list[self.index][0]
                 self.goal_position.position.y = goal_pose_list[self.index][1]
+        elif ENV == 6:
+            while position_check:
+                goal_pose_list = [[3.0, -0.5], [4, 1.5], [3, -2], [-1, 4], [3, 5]]
+                self.index = random.randrange(0, len(goal_pose_list))
+                print(self.index, self.last_index)
+                if self.last_index == self.index:
+                    position_check = True
+                else:
+                    self.last_index = self.index
+                    position_check = False
+                self.goal_position.position.x = goal_pose_list[self.index][0]
+                self.goal_position.position.y = goal_pose_list[self.index][1]
 
         time.sleep(0.5)
         self.respawnModel()

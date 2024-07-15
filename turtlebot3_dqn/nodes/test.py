@@ -110,7 +110,7 @@ class TestTrainedModel:
 if __name__ == '__main__':
     """Train RL Model on Each Environment"""
     # For Stage 2, 3, 4, use 28 dim model input (obstacle_min_range, obstacle_angle)
-    if ENV in (2, 3, 4) or TYPE == "FRL": 
+    if ENV in (2, 3, 4, 5, 6) or TYPE == "FRL": 
         state_size = 28
     else:
         state_size = 26

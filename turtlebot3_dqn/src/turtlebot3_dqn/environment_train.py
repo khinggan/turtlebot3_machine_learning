@@ -121,7 +121,12 @@ class Env():
 
         distance_rate = 2 ** (current_distance / self.goal_distance)
 
-        obstacle_reward = - math.exp(3.5-state[-4]) + 0.5          # state[-4]: obstacle distance = min(scan_range)
+        # obstacle_reward = - math.exp(3.5-state[-4]) + 0.5          # state[-4]: obstacle distance = min(scan_range)
+
+        if state[-4] < 0.5:
+            obstacle_reward = 5
+        else:
+            obstacle_reward = 0
 
         reward = ((round(yaw_reward[action] * 5, 2)) * distance_rate) + obstacle_reward
 
