@@ -35,6 +35,13 @@ class RLLocal:
         self.action_size = action_size
         self.agent = Agent(state_size, action_size)
         self.env = Env(action_size)
+
+        # if init model
+        # model_dict_path = os.environ["ROSFRLPATH"] + "model_dicts/saved_dict/RL_DuelDQN_700eps_env3.pkl"
+        # with open(model_dict_path, 'rb') as gm:
+        #     global_model_dict = pickle.load(gm)
+        # self.agent.model.load_state_dict(global_model_dict)
+        # self.agent.updateTargetModel()
         
         self.global_step = 0
         self.best_score = float('-inf')
@@ -74,7 +81,11 @@ class RLLocal:
                     score = -2000
                     done = True
                 
-                if t >= 240:
+                if ENV == 4: 
+                    thresh = 500
+                else:
+                    thresh = 240
+                if t >= thresh:
                     rospy.loginfo("Time out!!")
                     done = True
 

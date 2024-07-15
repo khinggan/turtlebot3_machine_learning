@@ -125,11 +125,10 @@ class Respawn():
 
         elif ENV == 4:
             while position_check:
-                goal_pose_list = [[1.0, 0.0], [2.0, -1.5], [0.0, -2.0], [2.0, 2.0], [0.8, 2.0],
-                                  [-1.9, 1.9], [-1.9,  0.2], [-1.9, -0.5], [-2.0, -2.0], [-0.5, -1.0],
+                goal_pose_list = [[1.0, 0.0], [2.0, -1.5], [0.0, -2.0], [2.0, 1.5], [0.8, 2.0],
+                                  [-1.9, 1.9], [-1.9,  0.2], [-1.9, -0.5], [-1.5, -2.0], [-0.5, -1.0],
                                   [1.5, -1.0], [-0.5, 1.0], [-1.0, -2.0], [1.8, -0.2], [1.0, -1.9]]
                 self.index = random.randrange(0, len(goal_pose_list))
-                print(self.index, self.last_index)
                 if self.last_index == self.index:
                     position_check = True
                 else:
@@ -153,7 +152,6 @@ class Respawn():
             while position_check:
                 goal_pose_list = [[2.5, -2.5], [3, -2], [4, -2], [4, -3], [2.5, -1]]
                 self.index = random.randrange(0, len(goal_pose_list))
-                print(self.index, self.last_index)
                 if self.last_index == self.index:
                     position_check = True
                 else:
