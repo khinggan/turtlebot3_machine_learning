@@ -28,10 +28,23 @@ import xml.etree.ElementTree as ET
 
 from script.read_config import yaml_config
 config = yaml_config()
-if config['MODE'] == 'TRAIN':
-    ENV = config['RL']['env']
-elif config['MODE'] == 'TEST':
-    ENV = config['TEST']['env']
+if config['TYPE'] == 'FRL':
+    if config['MODE'] == 'TRAIN':
+        current_client = config['FRL']['client']
+        # Find and print the matching client information
+        client = config['FRL']['clients'].get(current_client, None)
+        ENV = client['env']
+    elif config['MODE'] == 'TEST':
+        ENV = config['TEST']['env']
+    else:
+        ENV = 0
+elif config['TYPE'] == 'RL':
+    if config['MODE'] == 'TRAIN':
+        ENV = config['RL']['env']
+    elif config['MODE'] == 'TEST':
+        ENV = config['TEST']['env']
+    else:
+        ENV = 0
 else:
     ENV = 0
 
