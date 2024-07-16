@@ -183,7 +183,7 @@ class FRLClient:
         #     trained_model_dict_pickle = pickle.dumps(self.agent.model.state_dict())
 
         response = LocalTrainResponse()
-        response.resp = self.best_model_dict if self.best_model_dict else self.model_queue[0]
+        response.resp = pickle.dumps(self.best_model_dict if self.best_model_dict else self.model_queue[0])
         response.cid = CURR_CID
         response.round = request.round
         return response
