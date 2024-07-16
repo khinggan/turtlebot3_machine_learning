@@ -171,7 +171,7 @@ class FRLClient:
         directory_path = os.environ['ROSFRLPATH'] + "data/"
         if not os.path.exists(directory_path):
             os.makedirs(directory_path)
-        with open(directory_path + "FRL_{}_{}leps_{}rnd_{}_{}_env{}_envs{}.csv".format(MODEL, LOCAL_EPISODES,  ROUND, CURR_CID, ENV, ENVS), 'a') as d:
+        with open(directory_path + "FRL_{}_{}leps_{}rnd_{}_env{}_envs{}.csv".format(MODEL, LOCAL_EPISODES,  ROUND, CURR_CID, ENV, ENVS), 'a') as d:
             writer = csv.writer(d)
             writer.writerows([item for item in zip(scores, episodes, memory_lens, epsilons, episode_seconds)])
 
