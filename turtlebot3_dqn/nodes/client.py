@@ -23,7 +23,7 @@ import csv
 import pickle
 from turtlebot3_dqn.srv import LocalTrain, LocalTrainResponse
 from script.read_config import yaml_config
-from ros1_ws.src.turtlebot3_machine_learning.turtlebot3_dqn.utils.agent import ReinforceAgent
+# from ros1_ws.src.turtlebot3_machine_learning.turtlebot3_dqn.utils.agent import ReinforceAgent
 
 config = yaml_config()
 
@@ -160,7 +160,7 @@ class FRLClient:
                     save_dict_directory = os.environ['ROSFRLPATH'] + "model_dicts/saved_dict/"
                     if not os.path.exists(save_dict_directory):
                         os.makedirs(save_dict_directory)
-                    with open(save_dict_directory + "RL_{}_{}eps_env{}.pkl".format(MODEL, EPS, ENV), 'wb') as md:
+                    with open(save_dict_directory + "FRL_{}_{}eps_env{}.pkl".format(MODEL, LOCAL_EPISODES, ENV), 'wb') as md:
                         pickle.dump(self.best_model_dict, md)
                         print("BEST SCORE MODEL SAVE: Episode = {}, Best Score = {}".format(e, self.best_score))
 
