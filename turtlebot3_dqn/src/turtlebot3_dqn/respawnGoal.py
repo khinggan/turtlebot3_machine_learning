@@ -24,6 +24,7 @@ import os
 from gazebo_msgs.srv import SpawnModel, DeleteModel
 from gazebo_msgs.msg import ModelStates
 from geometry_msgs.msg import Pose
+import xml.etree.ElementTree as ET
 
 from script.read_config import yaml_config
 config = yaml_config()
@@ -33,6 +34,9 @@ elif config['MODE'] == 'TEST':
     ENV = config['TEST']['env']
 else:
     ENV = 0
+
+NO_GOAL_SPAWN_MARGIN = 0.3
+
 class Respawn():
     def __init__(self):
         self.modelPath = os.path.dirname(os.path.realpath(__file__))
@@ -47,10 +51,15 @@ class Respawn():
         self.goal_position.position.x = self.init_goal_x
         self.goal_position.position.y = self.init_goal_y
         self.modelName = 'goal'
+        # Env 2, 3
         self.obstacle_1 = 0.6, 0.6
         self.obstacle_2 = 0.6, -0.6
         self.obstacle_3 = -0.6, 0.6
         self.obstacle_4 = -0.6, -0.6
+        # Env 4
+        # self.obstacle_5 = 0.0, 0.0
+        # self.obstacle_6 = 0.0, 0.0
+        # self.wall_obstacle = self.get_wall_obstacle()
         self.last_goal_x = self.init_goal_x
         self.last_goal_y = self.init_goal_y
         self.last_index = 0
@@ -117,7 +126,8 @@ class Respawn():
                 else:
                     position_check = False
 
-                if abs(goal_x - self.last_goal_x) < 1 and abs(goal_y - self.last_goal_y) < 1:
+                # To find far next distance
+                if abs(goal_x - self.last_goal_x) < 2 and abs(goal_y - self.last_goal_y) < 2:
                     position_check = True
 
                 self.goal_position.position.x = goal_x
@@ -125,9 +135,34 @@ class Respawn():
 
         elif ENV == 4:
             while position_check:
-                goal_pose_list = [[1.0, 0.0], [2.0, -1.5], [0.0, -2.0], [2.0, 1.5], [0.8, 2.0],
-                                  [-1.9, 1.9], [-1.9,  0.2], [-1.9, -0.5], [-1.5, -2.0], [-0.5, -1.0],
-                                  [1.5, -1.0], [-0.5, 1.0], [-1.0, -2.0], [1.8, -0.2], [1.0, -1.9]]
+                # goal_x = random.randrange(-12, 13) / 10.0
+                # goal_y = random.randrange(-12, 13) / 10.0
+                # rospy.loginfo("Goal_X: {}, Gola_Y: {}".format(goal_x, goal_y))
+                # if abs(goal_x - self.obstacle_5[0]) <= 0.4 and abs(goal_y - self.obstacle_5[1]) <= 0.4:
+                #     position_check = True
+                #     rospy.loginfo("+++Obstacle_1+++")
+                # elif abs(goal_x - self.obstacle_6[0]) <= 0.4 and abs(goal_y - self.obstacle_6[1]) <= 0.4:
+                #     position_check = True
+                #     rospy.loginfo("---Obstacle_2---")
+                # elif self.wall_obstacle != []:
+                #     for obstacle in self.wall_obstacle:
+                #         if goal_x < obstacle[0][0] and goal_x > obstacle[2][0]:
+                #             if goal_y < obstacle[0][1] and goal_y > obstacle[2][1]:
+                #                 position_check = True
+                #     rospy.loginfo("===Obstacle_wall===")
+                # else:
+                #     position_check = False
+                # # To find far next distance
+                # if abs(goal_x - self.last_goal_x) < 2 and abs(goal_y - self.last_goal_y) < 2:
+                #     position_check = True
+                #     rospy.loginfo("***Obstacle_distance***")
+
+                # self.goal_position.position.x = goal_x
+                # self.goal_position.position.y = goal_y
+
+                goal_pose_list = [[1.0, 0.0], [2.0, -1.5], [0.2, -2.0], [2.0, 1.0], [0.7, 1.8],
+                                  [-1.9, 1.9], [-1.9,  0.2], [-1.9, -0.5], [-1.5, -1.5], [-0.5, -1.0],
+                                  [1.7, -1.0], [-0.5, 1.0], [-1.0, -2.0], [1.8, -0.2], [1.0, -1.9]]
                 self.index = random.randrange(0, len(goal_pose_list))
                 if self.last_index == self.index:
                     position_check = True
@@ -179,3 +214,35 @@ class Respawn():
         self.last_goal_y = self.goal_position.position.y
 
         return self.goal_position.position.x, self.goal_position.position.y
+
+    # def get_wall_obstacle(self):
+    #     wall_obstacle = []
+    #     if ENV == 4:
+    #         model_sdf = os.environ['ROSFRLPATH'] + "ros1_ws/src/turtlebot3_simulations/turtlebot3_gazebo/models/turtlebot3_plaza/model.sdf"
+    #     # elif ENV in (1, 2, 3):
+    #     #     model_sdf = os.environ['ROSFRLPATH'] + "ros1_ws/src/turtlebot3_simulations/turtlebot3_gazebo/models/turtlebot3_square/model.sdf"
+    #     else:
+    #         model_sdf = ""
+        
+    #     if model_sdf != "":
+    #         tree = ET.parse(model_sdf)
+    #         root = tree.getroot()
+    #         for wall in root.find('model').findall('link'):
+    #             pose = wall.find('pose').text.split(" ")
+    #             size = wall.find('collision').find('geometry').find('box').find('size').text.split()
+    #             rotation = float(pose[-1])
+    #             pose_x = float(pose[0])
+    #             pose_y = float(pose[1])
+    #             if rotation == 0:
+    #                 size_x = float(size[0]) + NO_GOAL_SPAWN_MARGIN * 2
+    #                 size_y = float(size[1]) + NO_GOAL_SPAWN_MARGIN * 2
+    #             else:
+    #                 size_x = float(size[1]) + NO_GOAL_SPAWN_MARGIN * 2
+    #                 size_y = float(size[0]) + NO_GOAL_SPAWN_MARGIN * 2
+    #             point_1 = [pose_x + size_x / 2, pose_y + size_y / 2]
+    #             point_2 = [point_1[0], point_1[1] - size_y]
+    #             point_3 = [point_1[0] - size_x, point_1[1] - size_y ]
+    #             point_4 = [point_1[0] - size_x, point_1[1] ]
+    #             wall_points = [point_1, point_2, point_3, point_4]
+    #             wall_obstacle.append(wall_points)
+    #     return wall_obstacle
