@@ -182,11 +182,11 @@ class FRLClient:
         # else: 
         #     trained_model_dict_pickle = pickle.dumps(self.agent.model.state_dict())
 
-        # response = LocalTrainResponse()
-        # response.resp = trained_model_dict_pickle
-        # response.cid = CURR_CID
-        # response.round = request.round
-        # return response
+        response = LocalTrainResponse()
+        response.resp = self.best_model_dict if self.best_model_dict else self.model_queue[0]
+        response.cid = CURR_CID
+        response.round = request.round
+        return response
     
     def sim_stuck(self, state):
         # store latest 20 state, if distance and heading not change in 20 steps, simulator is stucked
