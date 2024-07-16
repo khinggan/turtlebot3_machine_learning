@@ -25,26 +25,37 @@ from turtlebot3_dqn.srv import LocalTrain, LocalTrainResponse
 from script.read_config import yaml_config
 from ros1_ws.src.turtlebot3_machine_learning.turtlebot3_dqn.utils.agent import ReinforceAgent
 
-config = yaml_config()        # stages = config['FRL']['server']['stages']
-CURR_CID = config['FRL']['client']['curr_cid'] if config['FRL']['client']['curr_cid'] is not None else 1
-STAGE = config['FRL']['client']['stage'] if config['FRL']['client']['stage'] is not None else 1
-STAGES = config['FRL']['server']['stages']
-LOCAL_EPISODES = config['FRL']['client']['local_episode'] if config['FRL']['client']['local_episode'] is not None else 2
-ROUND = config['FRL']['server']['round'] if config['FRL']['server']['round'] is not None else 2
-stage_module_name = f'src.turtlebot3_dqn.environment_stage_{STAGE}'
-Env = getattr(importlib.import_module(stage_module_name), 'Env')
+config = yaml_config()
+
+current_client = config['FRL']['client']
+# Find and print the matching client information
+clients = config['FRL']['clients'].get(current_client, None)
+
+CURR_CID = clients['cid']
+ENV = clients['env']
+ENVS = "".join(list(config['FRL']['clients'].keys()))
+LOCAL_EPISODES = clients['lep']
+ROUND = config['FRL']['server']['round']
+MODEL = config['MODEL']
+
+from ros1_ws.src.turtlebot3_machine_learning.turtlebot3_dqn.src.turtlebot3_dqn.environment_train import Env
+agent_module = 'ros1_ws.src.turtlebot3_machine_learning.turtlebot3_dqn.utils.agent'
+Agent = getattr(importlib.import_module(agent_module), f'{MODEL}Agent')
+
 TAU = 0.005
 
 class FRLClient:
     def __init__(self, state_size=26, action_size=5) -> None:
         self.state_size = state_size
         self.action_size = action_size
-        self.agent = ReinforceAgent(state_size, action_size)
+        self.agent = Agent(state_size, action_size)
         self.env = Env(action_size)
         
         self.global_step = 0
         self.best_score = float('-inf')
         self.best_model_dict = None
+        self.score_queue = deque([], maxlen=10)
+        self.model_queue = deque([], maxlen=10)
 
         # check for simulation stuck; which may leads to high score in useless model
         self.check_stuck = deque([i for i in range(20)], maxlen=20)
@@ -57,7 +68,7 @@ class FRLClient:
         # Train and return trained model dict
         global_model_dict_pickle = request.req
         global_model_dict = pickle.loads(global_model_dict_pickle)
-        print("#### ROUND {}: CLIENT {} local train on Stage {} #### ".format(request.round, CURR_CID, STAGE))
+        print("#### ROUND {}: CLIENT {} local train on ENV {} #### ".format(request.round, CURR_CID, ENV))
 
         # Initialize agent model with global model dict, update target model
         self.agent.model.load_state_dict(global_model_dict)
@@ -91,7 +102,11 @@ class FRLClient:
                     score = -2000
                     done = True
                 
-                if t >= 240:
+                if ENV == 4: 
+                    thresh = 500
+                else:
+                    thresh = 240
+                if t >= thresh:
                     rospy.loginfo("Time out!!")
                     done = True
 
@@ -117,13 +132,10 @@ class FRLClient:
 
                     rospy.loginfo('Ep: %d score: %.2f memory: %d epsilon: %.2f time: %f',
                                 e, score, len(self.agent.memory), self.agent.epsilon, s)
-                
-                    # save best model
-                    if score > self.best_score:
-                        self.best_score = score
-                        self.best_model_dict = self.agent.model.state_dict()
-                        self.new_best_score = True
-                        rospy.loginfo("New Best Score: {}, saved best model!!".format(self.best_score))
+                    
+                    self.score_queue.append(score)
+                    self.model_queue.append(self.agent.model.state_dict())
+                    
                     break
 
                 self.global_step += 1
@@ -133,29 +145,48 @@ class FRLClient:
             # if agent.epsilon > agent.epsilon_min:
             #     agent.epsilon *= agent.epsilon_decay
         
-        state = self.env.reset()
+            # Get Best Model
+            if e % 10 == 0:
+                mean_score = sum(self.score_queue) / len(self.score_queue)
+                # save best model
+                if mean_score > self.best_score:
+                    self.best_score = mean_score
+                    # get corresponding model dict
+                    max_score = max(self.score_queue)
+                    max_score_ind = self.score_queue.index(max_score)
+                    self.best_model_dict = self.model_queue[max_score_ind]
+                    
+                    # SAVE TRAINED DICT
+                    save_dict_directory = os.environ['ROSFRLPATH'] + "model_dicts/saved_dict/"
+                    if not os.path.exists(save_dict_directory):
+                        os.makedirs(save_dict_directory)
+                    with open(save_dict_directory + "RL_{}_{}eps_env{}.pkl".format(MODEL, EPS, ENV), 'wb') as md:
+                        pickle.dump(self.best_model_dict, md)
+                        print("BEST SCORE MODEL SAVE: Episode = {}, Best Score = {}".format(e, self.best_score))
+
+        # state = self.env.reset()
         end_time = time.time()
 
         # SAVE EXPERIMENT DATA
         directory_path = os.environ['ROSFRLPATH'] + "data/"
         if not os.path.exists(directory_path):
             os.makedirs(directory_path)
-        with open(directory_path + "FRL_localep_{}_totalround_{}_client_{}_stage_{}_stages{}.csv".format(LOCAL_EPISODES,  ROUND, CURR_CID, STAGE, STAGES), 'a') as d:
+        with open(directory_path + "FRL_{}_{}leps_{}rnd_{}_{}_env{}_envs{}.csv".format(MODEL, LOCAL_EPISODES,  ROUND, CURR_CID, ENV, ENVS), 'a') as d:
             writer = csv.writer(d)
             writer.writerows([item for item in zip(scores, episodes, memory_lens, epsilons, episode_seconds)])
 
         print("Total Train Time on client {} is : {} seconds".format(CURR_CID, end_time - start_time))
-        if self.new_best_score: 
-            trained_model_dict_pickle = pickle.dumps(self.best_model_dict)
-            self.new_best_score = False
-        else: 
-            trained_model_dict_pickle = pickle.dumps(self.agent.model.state_dict())
+        # if self.new_best_score: 
+        #     trained_model_dict_pickle = pickle.dumps(self.best_model_dict)
+        #     self.new_best_score = False
+        # else: 
+        #     trained_model_dict_pickle = pickle.dumps(self.agent.model.state_dict())
 
-        response = LocalTrainResponse()
-        response.resp = trained_model_dict_pickle
-        response.cid = CURR_CID
-        response.round = request.round
-        return response
+        # response = LocalTrainResponse()
+        # response.resp = trained_model_dict_pickle
+        # response.cid = CURR_CID
+        # response.round = request.round
+        # return response
     
     def sim_stuck(self, state):
         # store latest 20 state, if distance and heading not change in 20 steps, simulator is stucked
@@ -169,8 +200,8 @@ class FRLClient:
 
 if __name__ == '__main__':
     """client service that get global model, train locally, then return local trained model"""
-    # For Stage 2, 3, 4, use 28 dim model input (obstacle_min_range, obstacle_angle)
-    if STAGE in (2, 3, 4, 5): 
+    # For ENV 2, 3, 4, use 28 dim model input (obstacle_min_range, obstacle_angle)
+    if ENV in (2, 3, 4, 5): 
         state_size = 28
     else:
         state_size = 26
