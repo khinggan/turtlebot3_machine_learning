@@ -200,11 +200,7 @@ class FRLClient:
 
 if __name__ == '__main__':
     """client service that get global model, train locally, then return local trained model"""
-    # For ENV 2, 3, 4, use 28 dim model input (obstacle_min_range, obstacle_angle)
-    if ENV in (2, 3, 4, 5): 
-        state_size = 28
-    else:
-        state_size = 26
+    state_size = 28
     action_size = 5
 
     rospy.init_node('client_{}_local_train'.format(CURR_CID))
