@@ -23,18 +23,22 @@ config = yaml_config()
 MODEL = config['MODEL']
 
 # TEST
-TEST_STAGE = config['TEST']['env']               # Test environment
+TEST_ENV = config['TEST']['env']               # Test environment
 TEST_EPOCHES = config['TEST']['eps']             # Test episodes
-TYPE = config['TEST']['type']
+TYPE = config['TYPE']
 
-# RL
-EPS = config['RL']['eps']
-ENV = config['RL']['env']
+current_client = config['FRL']['client']
+# Find and print the matching client information
+clients = config['FRL']['clients'].get(current_client, None)
 
-# FRL
-# LOCAL_EPISODES = config['FRL']['client']['local_episode']
-# ROUND = config['FRL']['server']['round']
-# STAGES = config['FRL']['server']['stages']
+if TYPE == "FRL":
+    # FRL
+    EPS = clients['lep']
+    ENV = clients['env']
+elif TYPE == "RL":
+    # RL
+    EPS = config['RL']['eps']
+    ENV = config['RL']['env']
 
 from ros1_ws.src.turtlebot3_machine_learning.turtlebot3_dqn.src.turtlebot3_dqn.environment_test import Env
 
@@ -53,8 +57,7 @@ class TestTrainedModel:
         if TYPE == 'RL':
             model_dict_file_name = "RL_{}_{}eps_env{}.pkl".format(MODEL, EPS, ENV)
         elif TYPE == 'FRL':
-            # model_dict_file_name = "{}_localep_{}_totalround_{}_stages_{}.pkl".format(TYPE, LOCAL_EPISODES, ROUND, STAGES)
-            print("FRL")
+            model_dict_file_name = "FRL_{}_{}eps_env{}.pkl".format(MODEL, EPS, ENV)
         else:
             print("FAIL TO LOAD TRAINED MODEL!!!!")
         
@@ -115,5 +118,5 @@ if __name__ == '__main__':
     rospy.init_node('test_trained_model')
     rl_local = TestTrainedModel(state_size=state_size, action_size=action_size)
     rl_local.test_trained_model()
-    rospy.loginfo("Test RL Model Trained on Stage {} Finished".format(ENV))
+    rospy.loginfo("Test RL Model Trained on ENV {} Finished".format(ENV))
     rospy.spin()
