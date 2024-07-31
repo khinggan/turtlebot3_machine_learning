@@ -149,7 +149,7 @@ class RLLocal:
         directory_path = os.environ['ROSFRLPATH'] + "data/"
         if not os.path.exists(directory_path):
             os.makedirs(directory_path)
-        with open(directory_path + "RL_{}_{}eps_env_{}.csv".format(MODEL, EPS, ENV), 'a') as d:
+        with open(directory_path + "RL_{}_{}eps_env{}.csv".format(MODEL, EPS, ENV), 'a') as d:
             writer = csv.writer(d)
             writer.writerows([item for item in zip(scores, episodes, memory_lens, epsilons, episode_seconds)])
 

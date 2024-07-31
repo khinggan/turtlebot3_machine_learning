@@ -106,7 +106,7 @@ class Env():
         current_distance = round(math.hypot(self.goal_x - self.position.x, self.goal_y - self.position.y),2)
         if current_distance < 0.2:
             self.get_goalbox = True
-        if self.stage in (2, 3, 4):
+        if self.stage in (2, 3, 4, 5, 6, 7):
             return_stage = scan_range + [obstacle_min_range, obstacle_angle, heading, current_distance], done
         else:
             return_stage = scan_range + [heading, current_distance], done

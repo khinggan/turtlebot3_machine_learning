@@ -33,8 +33,12 @@ clients = config['FRL']['clients'].get(current_client, None)
 
 if TYPE == "FRL":
     # FRL
-    EPS = clients['lep']
-    ENV = clients['env']
+    # EPS = clients['lep']
+    # ENV = clients['env']
+    # TYPE, MODEL
+    ROUND = config['FRL']['server']['round']
+    CLIENTS = "".join(list(config['FRL']['clients'].keys()))
+    ENVS = "".join([str(config['FRL']['clients'][v]['env']) for v in config['FRL']['clients']])
 elif TYPE == "RL":
     # RL
     EPS = config['RL']['eps']
@@ -46,18 +50,19 @@ agent_module = 'ros1_ws.src.turtlebot3_machine_learning.turtlebot3_dqn.utils.age
 Agent = getattr(importlib.import_module(agent_module), f'{MODEL}Agent')
 
 class TestTrainedModel:
-    def __init__(self, state_size=26, action_size=5) -> None:
+    def __init__(self, state_size=28, action_size=5) -> None:
         self.state_size = state_size
         self.action_size = action_size
         self.agent = Agent(state_size, action_size)
-        self.env = Env(action_size, ENV)
+        self.env = Env(action_size, TEST_ENV)
 
     def test_trained_model(self):
         # load trained dict
         if TYPE == 'RL':
             model_dict_file_name = "RL_{}_{}eps_env{}.pkl".format(MODEL, EPS, ENV)
         elif TYPE == 'FRL':
-            model_dict_file_name = "FRL_{}_{}eps_env{}.pkl".format(MODEL, EPS, ENV)
+            model_dict_file_name = "FRL_{}_{}rnd_{}_envs{}.pkl".format(MODEL, ROUND, CLIENTS, ENVS)
+            print(model_dict_file_name)
         else:
             print("FAIL TO LOAD TRAINED MODEL!!!!")
         
@@ -118,5 +123,5 @@ if __name__ == '__main__':
     rospy.init_node('test_trained_model')
     rl_local = TestTrainedModel(state_size=state_size, action_size=action_size)
     rl_local.test_trained_model()
-    rospy.loginfo("Test RL Model Trained on ENV {} Finished".format(ENV))
+    rospy.loginfo("Test RL Model Trained on ENV {} Finished".format(TEST_ENV))
     rospy.spin()

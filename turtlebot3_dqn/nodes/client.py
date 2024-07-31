@@ -45,7 +45,7 @@ Agent = getattr(importlib.import_module(agent_module), f'{MODEL}Agent')
 TAU = 0.005
 
 class FRLClient:
-    def __init__(self, state_size=26, action_size=5) -> None:
+    def __init__(self, state_size=28, action_size=5) -> None:
         self.state_size = state_size
         self.action_size = action_size
         self.agent = Agent(state_size, action_size)

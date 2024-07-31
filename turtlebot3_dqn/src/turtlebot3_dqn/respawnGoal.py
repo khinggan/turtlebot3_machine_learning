@@ -198,7 +198,9 @@ class Respawn():
                 # self.goal_position.position.y = goal_y_list[self.index]
         elif ENV == 5:
             while position_check:
-                goal_pose_list = [[2.5, -2.5], [3, -2], [4, -2], [4, -3], [2.5, -1]]
+                goal_pose_list = [[4, -1], [4, -2], [3, -2], [2, -2], [2, -3], 
+                                  [3, -3], [4, -3], [4, -4], [3, -4], [2, -4],
+                                  [1, -4], [1, -3], [2.5, -2.5], [3, -3.5], [1.8, -3.5]]
                 self.index = random.randrange(0, len(goal_pose_list))
                 if self.last_index == self.index:
                     position_check = True
@@ -209,9 +211,10 @@ class Respawn():
                 self.goal_position.position.y = goal_pose_list[self.index][1]
         elif ENV == 6:
             while position_check:
-                goal_pose_list = [[3.0, -0.5], [4, 1.5], [3, -2], [-1, 4], [3, 5]]
+                goal_pose_list = [[0, 4], [0, 3], [1, 3], [6, 1], [6, 0], 
+                                  [5, 0.5], [4.5, 0.5], [5, -1], [5, 1.5], [1, -4],
+                                  [-1, -2.5], [-1, -4], [1.5, 4.5], [3, 0.5], [7, 1]]
                 self.index = random.randrange(0, len(goal_pose_list))
-                print(self.index, self.last_index)
                 if self.last_index == self.index:
                     position_check = True
                 else:
@@ -219,7 +222,19 @@ class Respawn():
                     position_check = False
                 self.goal_position.position.x = goal_pose_list[self.index][0]
                 self.goal_position.position.y = goal_pose_list[self.index][1]
-
+        elif ENV == 7:
+            while position_check:
+                goal_pose_list = [[3,-3], [1.5, -3.5], [-2, -3], [-3, -2], [-3, -3], 
+                                  [-3, 3], [-1.5, 3.5], [2, 3], [3, 3], [3, -2],
+                                  [-3, -1], [-1.5, -1.5], [3, 2], [2, 2], [-0.5, 3.5]]
+                self.index = random.randrange(0, len(goal_pose_list))
+                if self.last_index == self.index:
+                    position_check = True
+                else:
+                    self.last_index = self.index
+                    position_check = False
+                self.goal_position.position.x = goal_pose_list[self.index][0]
+                self.goal_position.position.y = goal_pose_list[self.index][1]
         time.sleep(0.5)
         self.respawnModel()
 
