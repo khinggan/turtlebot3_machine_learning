@@ -211,9 +211,9 @@ class Respawn():
                 self.goal_position.position.y = goal_pose_list[self.index][1]
         elif ENV == 6:
             while position_check:
-                goal_pose_list = [[0, 4], [0, 3], [1, 3], [6, 1], [6, 0], 
-                                  [5, 0.5], [4.5, 0.5], [5, -1], [5, 1.5], [1, -4],
-                                  [-1, -2.5], [-1, -4], [1.5, 4.5], [3, 0.5], [7, 1]]
+                goal_pose_list = [[0, 4], [0.2, 3], [1, 3], [6, 1], [6, 0], 
+                                  [5, 0.2], [4.5, 0.5], [5, -1.1], [5, 1.5], [1, -4],
+                                  [-1, -2.5], [-1, -4], [1.5, 4.3], [3, 0.5], [7, 1]]
                 self.index = random.randrange(0, len(goal_pose_list))
                 if self.last_index == self.index:
                     position_check = True
