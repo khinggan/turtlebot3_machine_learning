@@ -108,8 +108,12 @@ class Env():
             self.get_goalbox = True
 
         # return scan_range + obstacle_min_ranges + obstacle_angles + [heading, current_distance], done
+        ######################################################################################
+        # if train in stage 2, 3, 4. use this
         return scan_range + [obstacle_min_range, obstacle_angle, heading, current_distance], done
+        # if train in stage 1, use this
         # return scan_range + [heading, current_distance], done
+        ######################################################################################
 
     def setReward(self, state, done, action):
         yaw_reward = []

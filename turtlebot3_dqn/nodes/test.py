@@ -60,6 +60,7 @@ class TestTrainedModel:
         # load trained dict
         if TYPE == 'RL':
             model_dict_file_name = "RL_{}_{}eps_env{}.pkl".format(MODEL, EPS, ENV)
+            print(model_dict_file_name)
         elif TYPE == 'FRL':
             model_dict_file_name = "FRL_{}_{}rnd_{}_envs{}.pkl".format(MODEL, ROUND, CLIENTS, ENVS)
             print(model_dict_file_name)

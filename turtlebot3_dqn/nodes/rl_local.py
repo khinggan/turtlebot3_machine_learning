@@ -167,7 +167,10 @@ class RLLocal:
 
 if __name__ == '__main__':
     """Train RL Model on Each Environment"""
-    state_size = 28
+    if ENV == 1:
+        state_size = 26
+    else:
+        state_size = 28
     action_size = 5
 
     rospy.init_node("rl_local_train")
