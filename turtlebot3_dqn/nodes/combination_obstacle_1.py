@@ -28,6 +28,7 @@ class Combination():
 
     def moving(self):
         state = 0
+        accelaration = 5.0                       # correlate with the turtlebot3_stage_4.launch real_time_update_rate; the default real_time_update_rate is 1000, I change to 5000, so the accelaration is 5.0
         while not rospy.is_shutdown():
             model = rospy.wait_for_message('gazebo/model_states', ModelStates)
             for i in range(len(model.name)):
@@ -39,98 +40,98 @@ class Combination():
                         state = 0
 
                     if state == 0:
-                        obstacle_1.pose.position.x -= 0.005
-                        obstacle_1.pose.position.y -= 0.012
+                        obstacle_1.pose.position.x -= 0.005 * accelaration
+                        obstacle_1.pose.position.y -= 0.012 * accelaration
                         if abs(obstacle_1.pose.position.x - 1.5) < 0.05 and abs(obstacle_1.pose.position.y - 0.8) < 0.05:
                             state = 1
 
                     elif state == 1:
-                        obstacle_1.pose.position.x -= 0.01
-                        obstacle_1.pose.position.y += 0.007
+                        obstacle_1.pose.position.x -= 0.01 * accelaration
+                        obstacle_1.pose.position.y += 0.007 * accelaration
                         if abs(obstacle_1.pose.position.x - 0.5) < 0.05 and abs(obstacle_1.pose.position.y - 1.5) < 0.05:
                             state = 2
 
                     elif state == 2:
-                        obstacle_1.pose.position.x -= 0.008
-                        obstacle_1.pose.position.y -= 0.002
+                        obstacle_1.pose.position.x -= 0.008 * accelaration
+                        obstacle_1.pose.position.y -= 0.002 * accelaration
                         if abs(obstacle_1.pose.position.x + 0.3) < 0.05 and abs(obstacle_1.pose.position.y - 1.3) < 0.05:
                             state = 3
 
                     elif state == 3:
-                        obstacle_1.pose.position.x -= 0.007
-                        obstacle_1.pose.position.y -= 0.005
+                        obstacle_1.pose.position.x -= 0.007 * accelaration
+                        obstacle_1.pose.position.y -= 0.005 * accelaration
                         if abs(obstacle_1.pose.position.x + 1) < 0.05 and abs(obstacle_1.pose.position.y - 0.8) < 0.05:
                             state = 4
 
                     elif state == 4:
-                        obstacle_1.pose.position.x -= 0.01
-                        obstacle_1.pose.position.y += 0.007
+                        obstacle_1.pose.position.x -= 0.01 * accelaration
+                        obstacle_1.pose.position.y += 0.007 * accelaration
                         if abs(obstacle_1.pose.position.x + 2) < 0.05 and abs(obstacle_1.pose.position.y - 1.5) < 0.05:
                             state = 5
 
                     elif state == 5:
-                        obstacle_1.pose.position.x -= 0.002
-                        obstacle_1.pose.position.y -= 0.007
+                        obstacle_1.pose.position.x -= 0.002 * accelaration
+                        obstacle_1.pose.position.y -= 0.007 * accelaration
                         if abs(obstacle_1.pose.position.x + 2.2) < 0.05 and abs(obstacle_1.pose.position.y - 0.8) < 0.05:
                             state = 6
 
                     elif state == 6:
-                        obstacle_1.pose.position.x += 0.004
-                        obstacle_1.pose.position.y -= 0.011
+                        obstacle_1.pose.position.x += 0.004 * accelaration
+                        obstacle_1.pose.position.y -= 0.011 * accelaration
                         if abs(obstacle_1.pose.position.x + 1.8) < 0.05 and abs(obstacle_1.pose.position.y + 0.3) < 0.05:
                             state = 7
 
                     elif state == 7:
-                        obstacle_1.pose.position.x += 0.003
-                        obstacle_1.pose.position.y -= 0.007
+                        obstacle_1.pose.position.x += 0.003 * accelaration
+                        obstacle_1.pose.position.y -= 0.007 * accelaration
                         if abs(obstacle_1.pose.position.x + 1.5) < 0.05 and abs(obstacle_1.pose.position.y + 1) < 0.05:
                             state = 8
 
                     elif state == 8:
-                        obstacle_1.pose.position.x += 0.009
-                        obstacle_1.pose.position.y += 0.007
+                        obstacle_1.pose.position.x += 0.009 * accelaration
+                        obstacle_1.pose.position.y += 0.007 * accelaration
                         if abs(obstacle_1.pose.position.x + 0.6) < 0.05 and abs(obstacle_1.pose.position.y + 0.3) < 0.05:
                             state = 9
 
                     elif state == 9:
-                        obstacle_1.pose.position.x += 0.011
-                        obstacle_1.pose.position.y -= 0.011
+                        obstacle_1.pose.position.x += 0.011 * accelaration
+                        obstacle_1.pose.position.y -= 0.011 * accelaration
                         if abs(obstacle_1.pose.position.x - 0.5) < 0.05 and abs(obstacle_1.pose.position.y + 1.4) < 0.05:
                             state = 10
 
                     elif state == 10:
-                        obstacle_1.pose.position.x += 0.006
-                        obstacle_1.pose.position.y -= 0.006
+                        obstacle_1.pose.position.x += 0.006 * accelaration
+                        obstacle_1.pose.position.y -= 0.006 * accelaration
                         if abs(obstacle_1.pose.position.x - 1.1) < 0.05 and abs(obstacle_1.pose.position.y + 2) < 0.05:
                             state = 11
 
                     elif state == 11:
-                        obstacle_1.pose.position.x += 0.009
-                        obstacle_1.pose.position.y += 0.01
+                        obstacle_1.pose.position.x += 0.009 * accelaration
+                        obstacle_1.pose.position.y += 0.01 * accelaration
                         if abs(obstacle_1.pose.position.x - 2) < 0.05 and abs(obstacle_1.pose.position.y + 1) < 0.05:
                             state = 12
 
                     elif state == 12:
-                        obstacle_1.pose.position.x -= 0.008
-                        obstacle_1.pose.position.y += 0.01
+                        obstacle_1.pose.position.x -= 0.008 * accelaration
+                        obstacle_1.pose.position.y += 0.01 * accelaration
                         if abs(obstacle_1.pose.position.x - 1.2) < 0.05 and abs(obstacle_1.pose.position.y + 0) < 0.05:
                             state = 13
 
                     elif state == 13:
-                        obstacle_1.pose.position.x -= 0.007
-                        obstacle_1.pose.position.y += 0.005
+                        obstacle_1.pose.position.x -= 0.007 * accelaration
+                        obstacle_1.pose.position.y += 0.005 * accelaration
                         if abs(obstacle_1.pose.position.x - 0.5) < 0.05 and abs(obstacle_1.pose.position.y - 0.5) < 0.05:
                             state = 14
 
                     elif state == 14:
-                        obstacle_1.pose.position.x += 0.017
-                        obstacle_1.pose.position.y += 0.008
+                        obstacle_1.pose.position.x += 0.017 * accelaration
+                        obstacle_1.pose.position.y += 0.008 * accelaration
                         if abs(obstacle_1.pose.position.x - 2.2) < 0.05 and abs(obstacle_1.pose.position.y - 1.3) < 0.05:
                             state = 15
 
                     elif state == 15:
-                        obstacle_1.pose.position.x -= 0.002
-                        obstacle_1.pose.position.y += 0.007
+                        obstacle_1.pose.position.x -= 0.002 * accelaration
+                        obstacle_1.pose.position.y += 0.007 * accelaration
                         if abs(obstacle_1.pose.position.x - 2) < 0.05 and abs(obstacle_1.pose.position.y - 2) < 0.05:
                             state = 0
 
