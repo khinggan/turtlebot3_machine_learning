@@ -22,18 +22,18 @@ class DQNAgent():
 
         self.epsilon = 1.0
         self.epsilon_start = 0.95
-        self.epsilon_decay = 10000
+        self.epsilon_decay = 15000
         self.epsilon_end = 0.05
 
         # self.epsilon = 1.0
         # self.epsilon_decay = 0.99
         # self.epsilon_min = 0.05
 
-        self.target_update = 300
+        self.target_update = 1000
 
         self.batch_size = 128
         self.train_start = 128
-        self.memory = ReplayMemory(10000)
+        self.memory = ReplayMemory(1000000)
 
         self.model = DQN(self.state_size, self.action_size).to(device)
         self.target_model = DQN(self.state_size, self.action_size).to(device)
@@ -243,18 +243,18 @@ class DuelDQNAgent():
 
         self.epsilon = 1.0
         self.epsilon_start = 0.95
-        self.epsilon_decay = 10000
+        self.epsilon_decay = 15000
         self.epsilon_end = 0.05
 
         # self.epsilon = 1.0
         # self.epsilon_decay = 0.99
         # self.epsilon_min = 0.05
 
-        self.target_update = 300
+        self.target_update = 1000
 
         self.batch_size = 128
         self.train_start = 128
-        self.memory = ReplayMemory(10000)
+        self.memory = ReplayMemory(1000000)
 
         self.model = DuelDQN(self.state_size, self.action_size).to(device)
         self.target_model = DuelDQN(self.state_size, self.action_size).to(device)
