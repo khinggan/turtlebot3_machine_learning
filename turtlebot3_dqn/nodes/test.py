@@ -96,6 +96,7 @@ class TestTrainedModel:
                 if t >= 500:
                     rospy.loginfo("Time out!!")
                     done = True
+                    self.env.step(action, timeout=True)
 
                 if done:
                     scores.append(score)

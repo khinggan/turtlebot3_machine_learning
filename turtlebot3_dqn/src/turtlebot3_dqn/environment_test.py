@@ -146,7 +146,7 @@ class Env():
 
         return reward
 
-    def step(self, action):
+    def step(self, action, timeout=False):
         max_angular_vel = 1.5
         ang_vel = ((self.action_size - 1)/2 - action) * max_angular_vel * 0.5
 
@@ -161,6 +161,11 @@ class Env():
                 data = rospy.wait_for_message('scan', LaserScan, timeout=5)
             except:
                 pass
+        
+        if timeout:
+            self.goal_x, self.goal_y = self.respawn_goal.getPosition(True, delete=True)
+            self.goal_distance = self.getGoalDistace()
+            self.get_goalbox = False
 
         state, done = self.getState(data)
         reward = self.setReward(state, done, action)
