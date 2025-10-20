@@ -115,7 +115,7 @@ class RLLocal:
                     
                     self.score_queue.append(score)
                     self.model_queue.append(self.agent.model.state_dict())
-                    
+                    self.env.step(action, timeout=True) # if collide or timeout, force change goal
                     break
 
                 self.global_step += 1

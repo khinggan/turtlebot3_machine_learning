@@ -102,10 +102,11 @@ class FRLClient:
                     score = -2000
                     done = True
                 
-                if ENV == 4: 
-                    thresh = 500
-                else:
-                    thresh = 240
+                thresh = 240
+                # if ENV == 4: 
+                #     thresh = 500
+                # else:
+                #     thresh = 240
                 if t >= thresh:
                     rospy.loginfo("Time out!!")
                     done = True
@@ -135,6 +136,7 @@ class FRLClient:
                     
                     self.score_queue.append(score)
                     self.model_queue.append(self.agent.model.state_dict())
+                    self.env.step(action, timeout=True)   # force reset
                     
                     break
 
