@@ -81,11 +81,10 @@ class RLLocal:
                     score = -2000
                     done = True
                 
-                thresh = 240
-                # if ENV == 4: 
-                #     thresh = 500
-                # else:
-                #     thresh = 240
+                if ENV == 4: 
+                    thresh = 240
+                else:
+                    thresh = 120
                 if t >= thresh:
                     rospy.loginfo("Time out!!")
                     done = True

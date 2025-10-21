@@ -118,8 +118,8 @@ class Respawn():
 
         if ENV in (1, 2, 3):
             while position_check:
-                goal_x = random.randrange(-12, 13) / 10.0
-                goal_y = random.randrange(-12, 13) / 10.0
+                goal_x = random.randrange(-12, 12) / 10.0
+                goal_y = random.randrange(-12, 12) / 10.0
 
                 # goal_x = random.uniform(-1.2, -0.6) if random.random() < 0.5 else random.uniform(0.6, 1.3)
                 # goal_y = random.uniform(-1.2, -0.6) if random.random() < 0.5 else random.uniform(0.6, 1.3)
@@ -141,7 +141,8 @@ class Respawn():
                     position_check = False
 
                 # To find far next distance
-                if abs(goal_x - self.last_goal_x) < 2 and abs(goal_y - self.last_goal_y) < 2:
+                # if abs(goal_x - self.last_goal_x) < 2 and abs(goal_y - self.last_goal_y) < 2:
+                if sqrt((goal_x - self.last_goal_x)**2 + (goal_y - self.last_goal_y)**2) < 1.5:
                     position_check = True
 
                 self.goal_position.position.x = goal_x
